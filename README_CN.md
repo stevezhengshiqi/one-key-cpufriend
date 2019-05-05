@@ -6,7 +6,7 @@
 
 我还是个bash语言新手，欢迎大佬们帮助我改善脚本。
 
-<b>这个脚本目前支持大部分5代-8代U</b>。如果需要，将来我会尝试添加更多机型。
+<b>这个脚本目前只支持大部分5代-8代U</b>。如果需要，将来我会尝试添加更多机型。
 
 这个脚本能修改低频率模式和性能模式，然后用[ResourceConverter.sh](https://github.com/acidanthera/CPUFriend/tree/master/ResourceConverter) 来生成定制的 `CPUFriendDataProvider.kext`。
 
@@ -52,4 +52,4 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/stevezhengshiqi/one-key-cp
 
 感谢 [shuhung](https://www.tonymacx86.com/members/shuhung.957282) 提供[配置修改思路](https://www.tonymacx86.com/threads/skylake-hwp-enable.214915/page-7)。
 
-感谢 [xzhih](https://github.com/xzhih) 提供一些建议。
+感谢 [PMheart](https://github.com/PMheart) 和 [xzhih](https://github.com/xzhih) 提供一些建议。

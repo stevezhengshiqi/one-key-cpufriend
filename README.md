@@ -52,4 +52,4 @@ Thanks to [Acidanthera](https://github.com/acidanthera) and [PMHeart](https://gi
 
 Thanks to [shuhung](https://www.tonymacx86.com/members/shuhung.957282) for providing [configuration modification ideas](https://www.tonymacx86.com/threads/skylake-hwp-enable.214915/page-7).
 
-Thanks to [xzhih](https://github.com/xzhih) for giving me advice.
+Thanks to [PMheart](https://github.com/PMheart) and [xzhih](https://github.com/xzhih) for giving me advice.
