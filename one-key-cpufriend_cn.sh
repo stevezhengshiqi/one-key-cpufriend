@@ -2,7 +2,7 @@
 
 # stevezhengshiqi 创建于2019年2月8日。
 # 暂时只支持大部分5代-8代U, 更老的CPU不使用X86PlatformPlugin.kext。
-# 此脚本很依赖于 CPUFriend(https://github.com/acidanthera/CPUFriend), 感谢 Acidanthera 和 PMHeart。
+# 此脚本很依赖于 CPUFriend(https://github.com/acidanthera/CPUFriend), 感谢PMHeart。
 
 # 当前的board-id
 BOARD_ID="$(ioreg -lw0 | grep -i "board-id" | sed -e '/[^<]*</s///; s/\"//g; s/\>//')"
@@ -110,7 +110,7 @@ function downloadKext() {
 # 拷贝目标plist
 function copyPlist() {
   if [[ ! -f "${X86_PLIST}" ]]; then
-    echo "${X86_PLIST} NOT found!"
+    echo "ERROR: 未找到${X86_PLIST}!"
     exit 1
   fi
 
@@ -169,7 +169,7 @@ function changeEPP(){
     2)
     # 保持默认值 80/90/92, 平衡电量模式
     # 如果LFM也没有改变, 退出脚本
-    if [ "${lfm_selection}" == 1 ];then
+    if [ "${lfm_selection}" == 1 ]; then
       echo "不忘初心，方得始终。下次再见。"
       clean
       exit 0
@@ -209,6 +209,7 @@ function generateKext(){
   ./ResourceConverter.sh --kext $BOARD_ID.plist
   cp -r CPUFriendDataProvider.kext /Users/`users`/Desktop/
   echo "生成完成"
+  echo
 }
 
 # 清理临时文件夹文件夹并结束
@@ -236,7 +237,6 @@ function main(){
   fi
   echo
   generateKext
-  echo
   clean
   echo "很棒！脚本运行结束, 请把桌面上的CPUFriend和CPUFriendDataProvider放入/CLOVER/kexts/Other/(或者L/E/)下"
   exit 0

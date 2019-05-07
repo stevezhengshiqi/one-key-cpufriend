@@ -110,7 +110,7 @@ function downloadKext() {
 # Copy the target plist
 function copyPlist() {
   if [[ ! -f "${X86_PLIST}" ]]; then
-    echo "${X86_PLIST} NOT found!"
+    echo "ERROR: ${X86_PLIST} NOT found!"
     exit 1
   fi
 
@@ -169,7 +169,7 @@ function changeEPP(){
     2)
     # Keep default 80/90/92, balance power
     # if also no changes for lfm, exit
-    if [ "${lfm_selection}" == 1 ];then
+    if [ "${lfm_selection}" == 1 ]; then
       echo "It's nice to keep the same, see you next time."
       clean
       exit 0
@@ -209,6 +209,7 @@ function generateKext(){
   ./ResourceConverter.sh --kext $BOARD_ID.plist
   cp -r CPUFriendDataProvider.kext /Users/`users`/Desktop/
   echo "Generate complete"
+  echo
 }
 
 # Delete tmp folder and end
@@ -236,7 +237,6 @@ function main(){
   fi
   echo
   generateKext
-  echo
   clean
   echo "Great! This is the end of the script, please copy CPUFriend and CPUFriendDataProvider from desktop to /CLOVER/kexts/Other/(or /Library/Extensions/)"
   exit 0
