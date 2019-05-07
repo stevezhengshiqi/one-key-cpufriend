@@ -78,21 +78,21 @@ function networkWarn() {
 
 # 下载CPUFriend仓库并解压最新release
 function downloadKext() {
-  local WORK_DIR="/Users/`users`/Desktop/one-key-cpufriend"
+  WORK_DIR="/Users/`users`/Desktop/one-key-cpufriend"
   [[ -d "${WORK_DIR}" ]] && sudo rm -rf "${WORK_DIR}"
   mkdir -p "${WORK_DIR}" && cd "${WORK_DIR}"
 
   echo
-  echo "--------------------------------------------------------------------"
-  echo "|* 正在下载CPUFriend，源自github.com/acidanthera/CPUFriend @PMHeart *|"
-  echo "--------------------------------------------------------------------"
+  echo '----------------------------------------------------------------------'
+  echo '|* 正在下载CPUFriend，源自github.com/acidanthera/CPUFriend @PMHeart *|'
+  echo '----------------------------------------------------------------------'
 
   # 下载ResourceConverter.sh
   local rcURL='https://raw.githubusercontent.com/acidanthera/CPUFriend/master/ResourceConverter/ResourceConverter.sh'
   curl --silent -O "${rcURL}" && chmod +x ./ResourceConverter.sh || networkWarn
 
   # 下载CPUFriend.kext
-  local cfVER=$ver
+  local cfVER="${ver}"
   local cfFileName="${cfVER}.RELEASE.zip"
   local cfURL="https://github.com/acidanthera/CPUFriend/releases/download/${cfVER}/${cfFileName}"
   # GitHub的CDN是被Amazon所拥有, 所以我们在这添加 -L 来支持重置链接
@@ -120,21 +120,21 @@ function copyPlist() {
 # 修改LFM值来调整最低频率
 # 重新考虑这个方法是否必要, 因为LFM看起来不会影响性能表现
 function changeLFM(){
-  echo "----------------------------"
+  echo "------------------------------"
   echo "|****** 选择低频率模式 ******|"
-  echo "----------------------------"
+  echo "------------------------------"
   echo "(1) 保持不变 (1200/1300mhz)"
   echo "(2) 800mhz (低负载下更省电)"
   read -p "你想选择哪个选项? (1/2):" lfm_selection
-  case $lfm_selection in
+  case "${lfm_selection}" in
   1)
   # 保持不变
   ;;
 
   2)
   # 把 1200/1300 改成 800
-  sudo /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
-  sudo /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
+  /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
+  /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
   ;;
 
   *)
@@ -147,15 +147,15 @@ function changeLFM(){
 # 修改EPP值来调节性能模式 (参考: https://www.tonymacx86.com/threads/skylake-hwp-enable.214915/page-7)
 # TO DO: 用更好的方式来修改变频参数, 见 https://github.com/Piker-Alpha/freqVectorsEdit.sh
 function changeEPP(){
-  echo "--------------------------"
+  echo "----------------------------"
   echo "|****** 选择性能模式 ******|"
-  echo "--------------------------"
+  echo "----------------------------"
   echo "(1) 最省电模式"
   echo "(2) 平衡电量模式 (默认)"
   echo "(3) 平衡性能模式"
   echo "(4) 高性能模式"
   read -p "你想选择哪个模式? (1/2/3/4):" epp_selection
-  case $epp_selection in
+  case "${epp_selection}" in
     1)
     # 把 80/90/92 改成 C0, 最省电模式
     /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:DAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
@@ -169,8 +169,9 @@ function changeEPP(){
     2)
     # 保持默认值 80/90/92, 平衡电量模式
     # 如果LFM也没有改变, 退出脚本
-    if [ $lfm_selection == 1 ];then
+    if [ "${lfm_selection}" == 1 ];then
       echo "不忘初心，方得始终。下次再见。"
+      clean
       exit 0
     fi
     ;;
@@ -205,7 +206,7 @@ function changeEPP(){
 # 生成 CPUFriendDataProvider.kext 并复制到桌面
 function generateKext(){
   echo "正在生成CPUFriendDataProvider.kext"
-  sudo ./ResourceConverter.sh --kext $BOARD_ID.plist
+  ./ResourceConverter.sh --kext $BOARD_ID.plist
   cp -r CPUFriendDataProvider.kext /Users/`users`/Desktop/
   echo "生成完成"
 }
@@ -224,10 +225,10 @@ function main(){
   checkBoardID
   getGitHubLatestRelease
   downloadKext
-  if [ $support == 1 ];then
+  if [ "${support}" == 1 ]; then
     copyPlist
     changeLFM
-  elif [ $support == 2 ];then
+  elif [ "${support}" == 2 ]; then
     copyPlist
     changeLFM
     echo

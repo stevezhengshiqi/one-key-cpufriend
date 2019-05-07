@@ -78,7 +78,7 @@ function networkWarn() {
 
 # Download CPUFriend repository and unzip latest release
 function downloadKext() {
-  local WORK_DIR="/Users/`users`/Desktop/one-key-cpufriend"
+  WORK_DIR="/Users/`users`/Desktop/one-key-cpufriend"
   [[ -d "${WORK_DIR}" ]] && sudo rm -rf "${WORK_DIR}"
   mkdir -p "${WORK_DIR}" && cd "${WORK_DIR}"
 
@@ -92,7 +92,7 @@ function downloadKext() {
   curl --silent -O "${rcURL}" && chmod +x ./ResourceConverter.sh || networkWarn
 
   # download CPUFriend.kext
-  local cfVER=$ver
+  local cfVER="${ver}"
   local cfFileName="${cfVER}.RELEASE.zip"
   local cfURL="https://github.com/acidanthera/CPUFriend/releases/download/${cfVER}/${cfFileName}"
   # GitHub's CDN is hosted on Amazon, so here we add -L for redirection support
@@ -126,15 +126,15 @@ function changeLFM(){
   echo "(1) Remain the same (1200/1300mhz)"
   echo "(2) 800mhz"
   read -p "Which option you want to choose? (1/2):" lfm_selection
-  case $lfm_selection in
+  case "${lfm_selection}" in
     1)
     # Keep default
     ;;
 
     2)
     # Change 1200/1300 to 800
-    sudo /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
-    sudo /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
     ;;
 
     *)
@@ -155,7 +155,7 @@ function changeEPP(){
   echo "(3) Balance performance"
   echo "(4) Performance"
   read -p "Which mode is your favourite? (1/2/3/4):" epp_selection
-  case $epp_selection in
+  case "${epp_selection}" in
     1)
     # Change 80/90/92 to C0, max power saving
     /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:DAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
@@ -169,8 +169,9 @@ function changeEPP(){
     2)
     # Keep default 80/90/92, balance power
     # if also no changes for lfm, exit
-    if [ $lfm_selection == 1 ];then
-      echo "It's nice to keep the same, see you next time"
+    if [ "${lfm_selection}" == 1 ];then
+      echo "It's nice to keep the same, see you next time."
+      clean
       exit 0
     fi
     ;;
@@ -205,7 +206,7 @@ function changeEPP(){
 # Generate CPUFriendDataProvider.kext and move to desktop
 function generateKext(){
   echo "Generating CPUFriendDataProvider.kext"
-  sudo ./ResourceConverter.sh --kext $BOARD_ID.plist
+  ./ResourceConverter.sh --kext $BOARD_ID.plist
   cp -r CPUFriendDataProvider.kext /Users/`users`/Desktop/
   echo "Generate complete"
 }
@@ -224,10 +225,10 @@ function main(){
   checkBoardID
   getGitHubLatestRelease
   downloadKext
-  if [ $support == 1 ];then
+  if [ "${support}" == 1 ]; then
     copyPlist
     changeLFM
-  elif [ $support == 2 ];then
+  elif [ "${support}" == 2 ]; then
     copyPlist
     changeLFM
     echo
