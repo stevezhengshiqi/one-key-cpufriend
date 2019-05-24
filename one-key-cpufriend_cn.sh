@@ -14,6 +14,7 @@ X86_PLIST="/System/Library/Extensions/IOPlatformPluginFamily.kext/Contents/PlugI
 EPP_SUPPORTED_MODELS=(
   'Mac-9AE82516C7C6B903' # MacBook9,1
   'Mac-EE2EBD4B90B839A8' # MacBook10,1
+  'Mac-827FAC58A8FDFA22' # MacBookAir8,1
   'Mac-473D31EABEB93F9B' # MacBookPro13,1
   'Mac-66E35819EE2D0D05' # MacBookPro13,2
   'Mac-A5C67F76ED83108C' # MacBookPro13,3
@@ -23,6 +24,11 @@ EPP_SUPPORTED_MODELS=(
   'Mac-937A206F2EE63C01' # MacBookPro15,1
   'Mac-827FB448E656EC26' # MacBookPro15,2
 )
+
+EPP_SUPPORTED_MODELS_SPECIAL=(
+'Mac-7BA5B2DFE22DDD8C' # Macmini8,1
+)
+
 LFM_SUPPORTED_MODELS=(
   'Mac-BE0E8AC46FE800CC' # MacBook8,1
   'Mac-9F18E312C5C2BF0B' # MacBookAir7,1
@@ -52,6 +58,8 @@ function printHeader() {
 function checkBoardID() {
   if echo "${EPP_SUPPORTED_MODELS[@]}" | grep -w "${BOARD_ID}" &> /dev/null; then
     support=2
+  elif echo "${EPP_SUPPORTED_MODELS_SPECIAL[@]}" | grep -w "${BOARD_ID}" &> /dev/null; then
+    support=3
   elif echo "${LFM_SUPPORTED_MODELS[@]}" | grep -w "${BOARD_ID}" &> /dev/null; then
     support=1
   else
@@ -99,8 +107,6 @@ function downloadKext() {
   curl --silent -L -O "${cfURL}" || networkWarn
   # 解压
   unzip -qu "${cfFileName}"
-  # 拷贝CPUFriend.kext到桌面
-  cp -r CPUFriend.kext /Users/`users`/Desktop/
   # 移除不需要的文件
   rm -rf "${cfFileName}" 'CPUFriend.kext.dSYM'
   echo '下载完成'
@@ -133,7 +139,11 @@ function changeLFM(){
 
   2)
   # 把 1200/1300 改成 800
+
+  # 修改 020000000d000000 成 0200000008000000
   /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
+
+  # 修改 020000000c000000 成 0200000008000000
   /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
   ;;
 
@@ -151,49 +161,117 @@ function changeEPP(){
   echo "|****** 选择性能模式 ******|"
   echo "----------------------------"
   echo "(1) 最省电模式"
-  echo "(2) 平衡电量模式 (默认)"
-  echo "(3) 平衡性能模式"
+
+  # 处理EPP_SUPPORTED_MODELS_SPECIAL
+  if [ "${support}" == 2 ]; then
+    echo "(2) 平衡电量模式 (默认)"
+    echo "(3) 平衡性能模式"
+  elif [ "${support}" == 3 ]; then
+    echo "(2) 平衡电量模式"
+    echo "(3) 平衡性能模式 (默认)"
+  fi
+
   echo "(4) 高性能模式"
   read -p "你想选择哪个模式? (1/2/3/4):" epp_selection
   case "${epp_selection}" in
     1)
     # 把 80/90/92 改成 C0, 最省电模式
+
+    # 修改 657070000000000000000000000000000000000080 成 6570700000000000000000000000000000000000c0
     /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:DAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+    # 修改 657070000000000000000000000000000000000080 成 6570700000000000000000000000000000000000c0
     /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAd:DAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
+
+    # 修改 657070000000000000000000000000000000000092 成 6570700000000000000000000000000000000000c0
     /usr/bin/sed -i "" "s:CSAAAAAAAAAAAAAAAAAAAAc:DAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+    # 修改 657070000000000000000000000000000000000090 成 6570700000000000000000000000000000000000c0
     /usr/bin/sed -i "" "s:CQAAAAAAAAAAAAAAAAAAAAc:DAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+    # 修改 657070000000000000000000000000000000000092 成 6570700000000000000000000000000000000000c0
     /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACS:ZXBwAAAAAAAAAAAAAAAAAAAAAADA:g" $BOARD_ID.plist
+
+    # 修改 657070000000000000000000000000000000000080 成 6570700000000000000000000000000000000000c0
     /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAADA:g" $BOARD_ID.plist
+
+    # 修改 657070000000000000000000000000000000000020 成 6570700000000000000000000000000000000000c0
+    /usr/bin/sed -i "" "s:AgAAAAAAAAAAAAAAAAAAAAd:DAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
     ;;
 
     2)
-    # 保持默认值 80/90/92, 平衡电量模式
-    # 如果LFM也没有改变, 退出脚本
-    if [ "${lfm_selection}" == 1 ]; then
+    if [ "${support}" == 2 ] && [ "${lfm_selection}" == 1 ]; then
+      # 保持默认值 80/90/92, 平衡电量模式
+      # 如果LFM也没有改变, 退出脚本
       echo "不忘初心，方得始终。下次再见。"
+      echo
+      clean
+      exit 0
+
+    # 处理 EPP_SUPPORTED_MODELS_SPECIAL
+    elif [ "${support}" == 3 ]; then
+      # 把 20 改成 80, 平衡电量模式
+
+      # 修改 657070000000000000000000000000000000000020 成 657070000000000000000000000000000000000080
+      /usr/bin/sed -i "" "s:AgAAAAAAAAAAAAAAAAAAAAd:CAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
+    fi
+    ;;
+
+    3)
+    if [ "${support}" == 2 ]; then
+      # 把 80/90/92 改成 40, 平衡性能模式
+
+      # 修改 657070000000000000000000000000000000000080 成 657070000000000000000000000000000000000040
+      /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+      # 修改 657070000000000000000000000000000000000080 成 657070000000000000000000000000000000000040
+      /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAd:BAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
+
+      # 修改 657070000000000000000000000000000000000092 成 657070000000000000000000000000000000000040
+      /usr/bin/sed -i "" "s:CSAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+      # 修改 657070000000000000000000000000000000000090 成 657070000000000000000000000000000000000040
+      /usr/bin/sed -i "" "s:CQAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+      # 修改 657070000000000000000000000000000000000092 成 657070000000000000000000000000000000000040
+      /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACS:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" $BOARD_ID.plist
+
+      # 修改 657070000000000000000000000000000000000080 成 657070000000000000000000000000000000000040
+      /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" $BOARD_ID.plist
+
+    elif [ "${support}" == 3 ] && [ "${lfm_selection}" == 1 ]; then
+      # 保持默认值 20, 平衡性能模式
+      # 如果LFM也没有改变, 退出脚本
+      echo "不忘初心，方得始终。下次再见。"
+      echo
       clean
       exit 0
     fi
     ;;
 
-    3)
-    # 把 80/90/92 改成 40, 平衡性能模式
-    /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
-    /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAd:BAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
-    /usr/bin/sed -i "" "s:CSAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
-    /usr/bin/sed -i "" "s:CQAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
-    /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACS:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" $BOARD_ID.plist
-    /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" $BOARD_ID.plist
-    ;;
-
     4)
     # 把 80/90/92 改成 00, 高性能模式
+
+    # 修改 657070000000000000000000000000000000000080 成 657070000000000000000000000000000000000000
     /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:AAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+    # 修改 657070000000000000000000000000000000000080 成 657070000000000000000000000000000000000000
     /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAd:AAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
+
+    # 修改 657070000000000000000000000000000000000092 成 657070000000000000000000000000000000000000
     /usr/bin/sed -i "" "s:CSAAAAAAAAAAAAAAAAAAAAc:AAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+    # 修改 657070000000000000000000000000000000000090 成 657070000000000000000000000000000000000000
     /usr/bin/sed -i "" "s:CQAAAAAAAAAAAAAAAAAAAAc:AAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+    # 修改 657070000000000000000000000000000000000092 成 657070000000000000000000000000000000000000
     /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACS:ZXBwAAAAAAAAAAAAAAAAAAAAAAAA:g" $BOARD_ID.plist
+
+    # 修改 657070000000000000000000000000000000000080 成 657070000000000000000000000000000000000000
     /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAAAA:g" $BOARD_ID.plist
+
+    # 修改 657070000000000000000000000000000000000020 成 657070000000000000000000000000000000000000
+    /usr/bin/sed -i "" "s:AgAAAAAAAAAAAAAAAAAAAAd:AAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
     ;;
 
     *)
@@ -208,6 +286,10 @@ function generateKext(){
   echo "正在生成CPUFriendDataProvider.kext"
   ./ResourceConverter.sh --kext $BOARD_ID.plist
   cp -r CPUFriendDataProvider.kext /Users/`users`/Desktop/
+
+  # 拷贝CPUFriend.kext到桌面
+  cp -r CPUFriend.kext /Users/`users`/Desktop/
+
   echo "生成完成"
   echo
 }
@@ -229,7 +311,7 @@ function main(){
   if [ "${support}" == 1 ]; then
     copyPlist
     changeLFM
-  elif [ "${support}" == 2 ]; then
+  elif [ "${support}" == 2 ] || [ "${support}" == 3 ]; then
     copyPlist
     changeLFM
     echo

@@ -14,6 +14,7 @@ X86_PLIST="/System/Library/Extensions/IOPlatformPluginFamily.kext/Contents/PlugI
 EPP_SUPPORTED_MODELS=(
   'Mac-9AE82516C7C6B903' # MacBook9,1
   'Mac-EE2EBD4B90B839A8' # MacBook10,1
+  'Mac-827FAC58A8FDFA22' # MacBookAir8,1
   'Mac-473D31EABEB93F9B' # MacBookPro13,1
   'Mac-66E35819EE2D0D05' # MacBookPro13,2
   'Mac-A5C67F76ED83108C' # MacBookPro13,3
@@ -23,6 +24,11 @@ EPP_SUPPORTED_MODELS=(
   'Mac-937A206F2EE63C01' # MacBookPro15,1
   'Mac-827FB448E656EC26' # MacBookPro15,2
 )
+
+EPP_SUPPORTED_MODELS_SPECIAL=(
+  'Mac-7BA5B2DFE22DDD8C' # Macmini8,1
+)
+
 LFM_SUPPORTED_MODELS=(
   'Mac-BE0E8AC46FE800CC' # MacBook8,1
   'Mac-9F18E312C5C2BF0B' # MacBookAir7,1
@@ -52,6 +58,8 @@ function printHeader() {
 function checkBoardID() {
   if echo "${EPP_SUPPORTED_MODELS[@]}" | grep -w "${BOARD_ID}" &> /dev/null; then
     support=2
+  elif echo "${EPP_SUPPORTED_MODELS_SPECIAL[@]}" | grep -w "${BOARD_ID}" &> /dev/null; then
+    support=3
   elif echo "${LFM_SUPPORTED_MODELS[@]}" | grep -w "${BOARD_ID}" &> /dev/null; then
     support=1
   else
@@ -99,8 +107,6 @@ function downloadKext() {
   curl --silent -L -O "${cfURL}" || networkWarn
   # decompress it
   unzip -qu "${cfFileName}"
-  # Copy CPUFriend.kext to Desktop
-  cp -r CPUFriend.kext /Users/`users`/Desktop/
   # remove stuffs we do not need
   rm -rf "${cfFileName}" 'CPUFriend.kext.dSYM'
   echo 'Download complete'
@@ -133,7 +139,11 @@ function changeLFM(){
 
     2)
     # Change 1200/1300 to 800
+
+    # Change 020000000d000000 to 0200000008000000
     /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
+
+    # Change 020000000c000000 to 0200000008000000
     /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
     ;;
 
@@ -151,49 +161,117 @@ function changeEPP(){
   echo "| Choose Energy Performance Preference |"
   echo "----------------------------------------"
   echo "(1) Max Power Saving"
-  echo "(2) Balance Power (Default)"
-  echo "(3) Balance performance"
+
+  # Deal with EPP_SUPPORTED_MODELS_SPECIAL
+  if [ "${support}" == 2 ]; then
+    echo "(2) Balance Power (Default)"
+    echo "(3) Balance performance"
+  elif [ "${support}" == 3 ]; then
+    echo "(2) Balance Power"
+    echo "(3) Balance performance (Default)"
+  fi
+
   echo "(4) Performance"
   read -p "Which mode is your favourite? (1/2/3/4):" epp_selection
   case "${epp_selection}" in
     1)
-    # Change 80/90/92 to C0, max power saving
+    # Change 20/80/90/92 to C0, max power saving
+
+    # change 657070000000000000000000000000000000000080 to 6570700000000000000000000000000000000000c0
     /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:DAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+    # change 657070000000000000000000000000000000000080 to 6570700000000000000000000000000000000000c0
     /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAd:DAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
+
+    # change 657070000000000000000000000000000000000092 to 6570700000000000000000000000000000000000c0
     /usr/bin/sed -i "" "s:CSAAAAAAAAAAAAAAAAAAAAc:DAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+    # change 657070000000000000000000000000000000000090 to 6570700000000000000000000000000000000000c0
     /usr/bin/sed -i "" "s:CQAAAAAAAAAAAAAAAAAAAAc:DAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+    # change 657070000000000000000000000000000000000092 to 6570700000000000000000000000000000000000c0
     /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACS:ZXBwAAAAAAAAAAAAAAAAAAAAAADA:g" $BOARD_ID.plist
+
+    # change 657070000000000000000000000000000000000080 to 6570700000000000000000000000000000000000c0
     /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAADA:g" $BOARD_ID.plist
+
+    # change 657070000000000000000000000000000000000020 to 6570700000000000000000000000000000000000c0
+    /usr/bin/sed -i "" "s:AgAAAAAAAAAAAAAAAAAAAAd:DAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
     ;;
 
     2)
-    # Keep default 80/90/92, balance power
-    # if also no changes for lfm, exit
-    if [ "${lfm_selection}" == 1 ]; then
+    if [ "${support}" == 2 ] && [ "${lfm_selection}" == 1 ]; then
+      # Keep default 80/90/92, balance power
+      # if also no changes for lfm, exit
       echo "It's nice to keep the same, see you next time."
+      echo
+      clean
+      exit 0
+
+    # Deal with EPP_SUPPORTED_MODELS_SPECIAL
+    elif [ "${support}" == 3 ]; then
+      # Change 20 to 80, balance performance
+
+      # change 657070000000000000000000000000000000000020 to 657070000000000000000000000000000000000080
+      /usr/bin/sed -i "" "s:AgAAAAAAAAAAAAAAAAAAAAd:CAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
+    fi
+    ;;
+
+    3)
+    if [ "${support}" == 2 ]; then
+      # Change 80/90/92 to 40, balance performance
+
+      # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000040
+      /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+      # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000040
+      /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAd:BAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
+
+      # change 657070000000000000000000000000000000000092 to 657070000000000000000000000000000000000040
+      /usr/bin/sed -i "" "s:CSAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+      # change 657070000000000000000000000000000000000090 to 657070000000000000000000000000000000000040
+      /usr/bin/sed -i "" "s:CQAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+      # change 657070000000000000000000000000000000000092 to 657070000000000000000000000000000000000040
+      /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACS:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" $BOARD_ID.plist
+
+      # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000040
+      /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" $BOARD_ID.plist
+
+    elif [ "${support}" == 3 ] && [ "${lfm_selection}" == 1 ]; then
+      # Keep default 20, balance performance
+      # if also no changes for lfm, exit
+      echo "It's nice to keep the same, see you next time."
+      echo
       clean
       exit 0
     fi
     ;;
 
-    3)
-    # Change 80/90/92 to 40, balance performance
-    /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
-    /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAd:BAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
-    /usr/bin/sed -i "" "s:CSAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
-    /usr/bin/sed -i "" "s:CQAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
-    /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACS:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" $BOARD_ID.plist
-    /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" $BOARD_ID.plist
-    ;;
-
     4)
-    # Change 80/90/92 to 00, performance
+    # Change 20/80/90/92 to 00, performance
+
+    # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000000
     /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:AAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+    # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000000
     /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAd:AAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
+
+    # change 657070000000000000000000000000000000000092 to 657070000000000000000000000000000000000000
     /usr/bin/sed -i "" "s:CSAAAAAAAAAAAAAAAAAAAAc:AAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+    # change 657070000000000000000000000000000000000090 to 657070000000000000000000000000000000000000
     /usr/bin/sed -i "" "s:CQAAAAAAAAAAAAAAAAAAAAc:AAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+
+    # change 657070000000000000000000000000000000000092 to 657070000000000000000000000000000000000000
     /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACS:ZXBwAAAAAAAAAAAAAAAAAAAAAAAA:g" $BOARD_ID.plist
+
+    # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000000
     /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAAAA:g" $BOARD_ID.plist
+
+    # change 657070000000000000000000000000000000000020 to 657070000000000000000000000000000000000000
+    /usr/bin/sed -i "" "s:AgAAAAAAAAAAAAAAAAAAAAd:AAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
     ;;
 
     *)
@@ -208,6 +286,10 @@ function generateKext(){
   echo "Generating CPUFriendDataProvider.kext"
   ./ResourceConverter.sh --kext $BOARD_ID.plist
   cp -r CPUFriendDataProvider.kext /Users/`users`/Desktop/
+
+  # Copy CPUFriend.kext to Desktop
+  cp -r CPUFriend.kext /Users/`users`/Desktop/
+
   echo "Generate complete"
   echo
 }
@@ -229,7 +311,7 @@ function main(){
   if [ "${support}" == 1 ]; then
     copyPlist
     changeLFM
-  elif [ "${support}" == 2 ]; then
+  elif [ "${support}" == 2 ] || [ "${support}" == 3 ]; then
     copyPlist
     changeLFM
     echo
