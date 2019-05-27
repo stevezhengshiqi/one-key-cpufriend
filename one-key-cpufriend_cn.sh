@@ -41,7 +41,7 @@ LFM_SUPPORTED_MODELS=(
 )
 
 function printHeader() {
-  printf '\e[8;40;110t'
+  printf '\e[8;40;100t'
 
   # 界面 (参考: http://patorjk.com/software/taag/#p=display&f=Ivrit&t=C%20P%20U%20F%20R%20I%20E%20N%20D)
   echo '  ____   ____    _   _   _____   ____    ___   _____   _   _   ____ '
@@ -178,29 +178,38 @@ function customizeLFM
       # 如果用户输入0, 回到主程序
       return
 
-    # 可接受的LFM应该在400~4000之间
-    elif [ ${gLFM_RAW} -ge 400 ] && [ ${gLFM_RAW} -le 4000 ]; then
-      # 从输入值获取4位十进制数字, 例如 800 -> 0800
-      gLFM_RAW=$(printf '%04d' ${gLFM_RAW})
-      # 提取开头两位数字
-      gLFM_RAW=$(echo ${gLFM_RAW} | cut -c -2)
-      # 移除开头的0, 因为比如08, bash会判断它为八进制数字
-      gLFM_RAW=$(echo ${gLFM_RAW} | sed 's/0*//')
-      # 转换gLFM_RAW到十六进制, 并把它插入到LFM字段
-      gLFM_VAL=$(printf '02000000%02x000000' ${gLFM_RAW})
-      # 转换gLFM_VAL到base64
-      gLFM_ENCODE=$(printf ${gLFM_VAL} | xxd -r -p | base64)
-      # 提取开头11位数字
-      gLFM_ENCODE=$(echo ${gLFM_ENCODE} | cut -c -11)
+    # 检查gLFM_RAW是否为整数
+    elif [[ ${gLFM_RAW} =~ ^[0-9]*$ ]]; then
 
-      # 修改 020000000d000000 成 02000000{自定义值}000000
-      /usr/bin/sed -i "" "s:AgAAAA0AAAA:${gLFM_ENCODE}:g" $BOARD_ID.plist
-      # 修改 020000000c000000 成 02000000{自定义值}000000
-      /usr/bin/sed -i "" "s:AgAAAAwAAAA:${gLFM_ENCODE}:g" $BOARD_ID.plist
-      return
+      # 可接受的LFM应该在400~4000之间
+      if [ ${gLFM_RAW} -ge 400 ] && [ ${gLFM_RAW} -le 4000 ]; then
+        # 从输入值获取4位十进制数字, 例如 800 -> 0800
+        gLFM_RAW=$(printf '%04d' ${gLFM_RAW})
+        # 提取开头两位数字
+        gLFM_RAW=$(echo ${gLFM_RAW} | cut -c -2)
+        # 移除开头的0, 因为比如08, bash会判断它为八进制数字
+        gLFM_RAW=$(echo ${gLFM_RAW} | sed 's/0*//')
+        # 转换gLFM_RAW到十六进制, 并把它插入到LFM字段
+        gLFM_VAL=$(printf '02000000%02x000000' ${gLFM_RAW})
+        # 转换gLFM_VAL到base64
+        gLFM_ENCODE=$(printf ${gLFM_VAL} | xxd -r -p | base64)
+        # 提取开头11位数字
+        gLFM_ENCODE=$(echo ${gLFM_ENCODE} | cut -c -11)
+
+        # 修改 020000000d000000 成 02000000{自定义值}000000
+        /usr/bin/sed -i "" "s:AgAAAA0AAAA:${gLFM_ENCODE}:g" $BOARD_ID.plist
+        # 修改 020000000c000000 成 02000000{自定义值}000000
+        /usr/bin/sed -i "" "s:AgAAAAwAAAA:${gLFM_ENCODE}:g" $BOARD_ID.plist
+        return
+
+      else
+        # 非有效值, 给3次机会重新输入
+        echo
+        echo "WARNING: 请输入有效值 (400~4000)!"
+        Count=$(($Count+1))
+      fi
 
     else
-      # 非有效值, 给3次机会重新输入
       echo
       echo "WARNING: 请输入有效值 (400~4000)!"
       Count=$(($Count+1))

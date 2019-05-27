@@ -41,7 +41,7 @@ LFM_SUPPORTED_MODELS=(
 )
 
 function printHeader() {
-  printf '\e[8;40;110t'
+  printf '\e[8;40;100t'
 
   # Interface (ref: http://patorjk.com/software/taag/#p=display&f=Ivrit&t=C%20P%20U%20F%20R%20I%20E%20N%20D)
   echo '  ____   ____    _   _   _____   ____    ___   _____   _   _   ____ '
@@ -142,10 +142,10 @@ function changeLFM(){
     2)
     # Change 1200/1300 to 800
 
-    # Change 020000000d000000 to 0200000008000000
+    # change 020000000d000000 to 0200000008000000
     /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
 
-    # Change 020000000c000000 to 0200000008000000
+    # change 020000000c000000 to 0200000008000000
     /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
     ;;
 
@@ -178,29 +178,38 @@ function customizeLFM
       # if user enters 0, back to main function
       return
 
-    # acceptable LFM should in 400~4000
-    elif [ ${gLFM_RAW} -ge 400 ] && [ ${gLFM_RAW} -le 4000 ]; then
-      # get 4 denary number from user input, eg. 800 -> 0800
-      gLFM_RAW=$(printf '%04d' ${gLFM_RAW})
-      # extract the first two digits
-      gLFM_RAW=$(echo ${gLFM_RAW} | cut -c -2)
-      # remove zeros at the head, because like 08, bash will consider it as octonary number
-      gLFM_RAW=$(echo ${gLFM_RAW} | sed 's/0*//')
-      # convert gLFM_RAW to hex and insert it in LFM field
-      gLFM_VAL=$(printf '02000000%02x000000' ${gLFM_RAW})
-      # convert gLFM_VAL to base64
-      gLFM_ENCODE=$(printf ${gLFM_VAL} | xxd -r -p | base64)
-      # extract the first 11 digits
-      gLFM_ENCODE=$(echo ${gLFM_ENCODE} | cut -c -11)
+    # check whether gLFM_RAW is an integer
+    elif [[ ${gLFM_RAW} =~ ^[0-9]*$ ]]; then
 
-      # change 020000000d000000 to 02000000{Customized Value}000000
-      /usr/bin/sed -i "" "s:AgAAAA0AAAA:${gLFM_ENCODE}:g" $BOARD_ID.plist
-      # change 020000000c000000 to 02000000{Customized Value}000000
-      /usr/bin/sed -i "" "s:AgAAAAwAAAA:${gLFM_ENCODE}:g" $BOARD_ID.plist
-      return
+      # acceptable LFM should in 400~4000
+      if [ ${gLFM_RAW} -ge 400 ] && [ ${gLFM_RAW} -le 4000 ]; then
+        # get 4 denary number from user input, eg. 800 -> 0800
+        gLFM_RAW=$(printf '%04d' ${gLFM_RAW})
+        # extract the first two digits
+        gLFM_RAW=$(echo ${gLFM_RAW} | cut -c -2)
+        # remove zeros at the head, because like 08, bash will consider it as octonary number
+        gLFM_RAW=$(echo ${gLFM_RAW} | sed 's/0*//')
+        # convert gLFM_RAW to hex and insert it in LFM field
+        gLFM_VAL=$(printf '02000000%02x000000' ${gLFM_RAW})
+        # convert gLFM_VAL to base64
+        gLFM_ENCODE=$(printf ${gLFM_VAL} | xxd -r -p | base64)
+        # extract the first 11 digits
+        gLFM_ENCODE=$(echo ${gLFM_ENCODE} | cut -c -11)
+
+        # change 020000000d000000 to 02000000{Customized Value}000000
+        /usr/bin/sed -i "" "s:AgAAAA0AAAA:${gLFM_ENCODE}:g" $BOARD_ID.plist
+        # change 020000000c000000 to 02000000{Customized Value}000000
+        /usr/bin/sed -i "" "s:AgAAAAwAAAA:${gLFM_ENCODE}:g" $BOARD_ID.plist
+        return
+
+      else
+        # invalid value, give 3 chances to re-input
+        echo
+        echo "WARNING: Please enter valid value (400~4000)!"
+        Count=$(($Count+1))
+      fi
 
     else
-      # invalid value, give 3 chances to re-input
       echo
       echo "WARNING: Please enter valid value (400~4000)!"
       Count=$(($Count+1))
@@ -379,7 +388,8 @@ function main(){
   echo
   generateKext
   clean
-  echo "Great! This is the end of the script, please copy CPUFriend and CPUFriendDataProvider from desktop to /CLOVER/kexts/Other/(or L/E/)"
+  echo "Great! This is the end of the script, please copy CPUFriend and CPUFriendDataProvider"
+  echo "from desktop to /CLOVER/kexts/Other/(or L/E/)"
   exit 0
 }
 
