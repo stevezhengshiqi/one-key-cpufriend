@@ -7,6 +7,12 @@
 # 当前的board-id
 BOARD_ID="$(ioreg -lw0 | grep -i "board-id" | sed -e '/[^<]*</s///; s/\"//g; s/\>//')"
 
+# 输出样式设置
+BOLD="\033[1m"
+RED="\033[1;31m"
+GREEN="\033[1;32m"
+OFF="\033[m"
+
 # 对应的plist
 X86_PLIST="/System/Library/Extensions/IOPlatformPluginFamily.kext/Contents/PlugIns/X86PlatformPlugin.kext/Contents/Resources/${BOARD_ID}.plist"
 
@@ -41,7 +47,7 @@ LFM_SUPPORTED_MODELS=(
 )
 
 function printHeader() {
-  printf '\e[8;40;100t'
+  printf '\e[8;40;90t'
 
   # 界面 (参考: http://patorjk.com/software/taag/#p=display&f=Ivrit&t=C%20P%20U%20F%20R%20I%20E%20N%20D)
   echo '  ____   ____    _   _   _____   ____    ___   _____   _   _   ____ '
@@ -63,7 +69,7 @@ function checkBoardID() {
   elif echo "${LFM_SUPPORTED_MODELS[@]}" | grep -w "${BOARD_ID}" &> /dev/null; then
     support=1
   else
-    echo 'ERROR: 抱歉，你的board-id暂不被支持!'
+    echo -e "[ ${RED}ERROR${OFF} ]: 抱歉，你的board-id暂不被支持!"
     exit 1
   fi
 }
@@ -73,14 +79,15 @@ function getGitHubLatestRelease() {
   ver="$(curl --silent "${repoURL}" | grep 'tag_name' | head -n 1 | awk -F ":" '{print $2}' | tr -d '"' | tr -d ',' | tr -d ' ')"
 
   if [[ -z "${ver}" ]]; then
-    echo "ERROR: 无法从${repoURL}获取最新release, 请检查网络状态!"
+    echo -e "[ ${RED}ERROR${OFF} ]: 无法从${repoURL}获取最新release, 请检查网络状态!"
     exit 1
   fi
 }
 
 # 如果网络异常，退出
 function networkWarn() {
-  echo "ERROR: 下载CPUFriend失败, 请检查网络状态!"
+  echo -e "[ ${RED}ERROR${OFF} ]: 下载CPUFriend失败, 请检查网络状态!"
+  clean
   exit 1
 }
 
@@ -105,19 +112,20 @@ function downloadKext() {
   local cfFileName="${cfVER}.RELEASE.zip"
   local cfURL="https://github.com/acidanthera/CPUFriend/releases/download/${cfVER}/${cfFileName}"
   # GitHub的CDN是被Amazon所拥有, 所以我们在这添加 -L 来支持重置链接
-  curl --silent -L -O "${cfURL}" || networkWarn
+  curl -# -L -O "${cfURL}" || networkWarn
   # 解压
   unzip -qu "${cfFileName}"
   # 移除不需要的文件
   rm -rf "${cfFileName}" 'CPUFriend.kext.dSYM'
-  echo '下载完成'
+  echo -e "[ ${GREEN}OK${OFF} ]下载完成"
   echo
 }
 
 # 拷贝目标plist
 function copyPlist() {
   if [[ ! -f "${X86_PLIST}" ]]; then
-    echo "ERROR: 未找到${X86_PLIST}!"
+    echo -e "[ ${RED}ERROR${OFF} ]: 未找到${X86_PLIST}!"
+    clean
     exit 1
   fi
 
@@ -133,32 +141,34 @@ function changeLFM(){
   echo "(1) 保持不变 (1200/1300mhz)"
   echo "(2) 800mhz (低负载下更省电)"
   echo "(3) 自定义"
-  read -p "你想选择哪个选项? (1/2/3):" lfm_selection
+  echo -e "${BOLD}你想选择哪个选项? (1/2/3)${OFF}"
+  read -p ":" lfm_selection
   case ${lfm_selection} in
-  1)
-  # 保持不变
-  ;;
+    1)
+    # 保持不变
+    ;;
 
-  2)
-  # 把 1200/1300 改成 800
+    2)
+    # 把 1200/1300 改成 800
 
-  # 修改 020000000d000000 成 0200000008000000
-  /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
+    # 修改 020000000d000000 成 0200000008000000
+    /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
 
-  # 修改 020000000c000000 成 0200000008000000
-  /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
-  ;;
+    # 修改 020000000c000000 成 0200000008000000
+    /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
+    ;;
 
-  3)
-  # 自定义LFM
-  customizeLFM
-  ;;
+    3)
+    # 自定义LFM
+    customizeLFM
+    ;;
 
-  *)
-  echo "ERROR: 输入有误, 脚本将退出"
-  exit 1
-  ;;
- esac
+    *)
+    echo -e "[ ${RED}ERROR${OFF} ]: 输入有误, 脚本将退出"
+    clean
+    exit 1
+    ;;
+  esac
 }
 
 # 自定义LFM
@@ -171,7 +181,7 @@ function customizeLFM
   while  [ ${Count} -lt 3 ] && [[ ${gLFM_RAW} != 0 ]];
   do
     echo
-    echo "请输入最低频率, 单位是mhz (例如 1300, 2700), 输入0来退出"
+    echo -e "${BOLD}请输入最低频率, 单位是mhz (例如 1300, 2700), 输入0来退出${OFF}"
     echo "有效值应该在800和3500之间, 离谱的值可能会导致硬件故障!"
     read -p ": " gLFM_RAW
     if [ ${gLFM_RAW} == 0 ]; then
@@ -205,21 +215,22 @@ function customizeLFM
       else
         # 非有效值, 给3次机会重新输入
         echo
-        echo "WARNING: 请输入有效值 (400~4000)!"
+        echo -e "[ ${BOLD}WARNING${OFF} ]: 请输入有效值 (400~4000)!"
         Count=$(($Count+1))
       fi
 
     else
       # 非有效值, 给3次机会重新输入
       echo
-      echo "WARNING: 请输入有效值 (400~4000)!"
+      echo -e "[ ${BOLD}WARNING${OFF} ]: 请输入有效值 (400~4000)!"
       Count=$(($Count+1))
     fi
   done
 
   if [ ${Count} > 2 ]; then
     # 如果3次机会后输入值仍然非有效值, 退出
-    echo "ERROR: 输入有误, 脚本将退出"
+    echo -e "[ ${RED}ERROR${OFF} ]: 输入有误, 脚本将退出"
+    clean
     exit 1
   fi
 }
@@ -242,7 +253,8 @@ function changeEPP(){
   fi
 
   echo "(4) 高性能模式"
-  read -p "你想选择哪个模式? (1/2/3/4):" epp_selection
+  echo -e "${BOLD}你想选择哪个模式? (1/2/3/4)${OFF}"
+  read -p ":" epp_selection
   case ${epp_selection} in
     1)
     # 把 80/90/92 改成 C0, 最省电模式
@@ -274,7 +286,6 @@ function changeEPP(){
       # 保持默认值 80/90/92, 平衡电量模式
       # 如果LFM也没有改变, 退出脚本
       echo "不忘初心，方得始终。下次再见。"
-      echo
       clean
       exit 0
 
@@ -313,7 +324,6 @@ function changeEPP(){
       # 保持默认值 20, 平衡性能模式
       # 如果LFM也没有改变, 退出脚本
       echo "不忘初心，方得始终。下次再见。"
-      echo
       clean
       exit 0
     fi
@@ -345,7 +355,8 @@ function changeEPP(){
     ;;
 
     *)
-    echo "ERROR: 输入有误, 脚本将退出"
+    echo -e "[ ${RED}ERROR${OFF} ]: 输入有误, 脚本将退出"
+    clean
     exit 1
     ;;
   esac
@@ -360,15 +371,15 @@ function generateKext(){
   # 拷贝CPUFriend.kext到桌面
   cp -r CPUFriend.kext /Users/`users`/Desktop/
 
-  echo "生成完成"
-  echo
+  echo -e "[ ${GREEN}OK${OFF} ]生成完成"
 }
 
 # 清理临时文件夹文件夹并结束
 function clean(){
+  echo
   echo "正在清理临时文件"
   sudo rm -rf "${WORK_DIR}"
-  echo "清理完成"
+  echo -e "[ ${GREEN}OK${OFF} ]清理完成"
   echo
 }
 
@@ -389,7 +400,8 @@ function main(){
   echo
   generateKext
   clean
-  echo "很棒！脚本运行结束, 请把桌面上的CPUFriend和CPUFriendDataProvider放入/CLOVER/kexts/Other/(或者L/E/)下"
+  echo -e "[ ${GREEN}OK${OFF} ]脚本运行结束, 请把桌面上的CPUFriend和CPUFriendDataProvider"
+  echo "放入/CLOVER/kexts/Other/(或者L/E/)下"
   exit 0
 }
 

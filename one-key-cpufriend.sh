@@ -7,6 +7,12 @@
 # Current board-id
 BOARD_ID="$(ioreg -lw0 | grep -i "board-id" | sed -e '/[^<]*</s///; s/\"//g; s/\>//')"
 
+# Display style setting
+BOLD="\033[1m"
+RED="\033[1;31m"
+GREEN="\033[1;32m"
+OFF="\033[m"
+
 # Corresponding plist
 X86_PLIST="/System/Library/Extensions/IOPlatformPluginFamily.kext/Contents/PlugIns/X86PlatformPlugin.kext/Contents/Resources/${BOARD_ID}.plist"
 
@@ -41,7 +47,7 @@ LFM_SUPPORTED_MODELS=(
 )
 
 function printHeader() {
-  printf '\e[8;40;100t'
+  printf '\e[8;40;90t'
 
   # Interface (ref: http://patorjk.com/software/taag/#p=display&f=Ivrit&t=C%20P%20U%20F%20R%20I%20E%20N%20D)
   echo '  ____   ____    _   _   _____   ____    ___   _____   _   _   ____ '
@@ -63,7 +69,7 @@ function checkBoardID() {
   elif echo "${LFM_SUPPORTED_MODELS[@]}" | grep -w "${BOARD_ID}" &> /dev/null; then
     support=1
   else
-    echo 'ERROR: Sorry, your board-id has not been supported yet!'
+    echo -e "[ ${RED}ERROR${OFF} ]: Sorry, your board-id has not been supported yet!"
     exit 1
   fi
 }
@@ -73,14 +79,15 @@ function getGitHubLatestRelease() {
   ver="$(curl --silent "${repoURL}" | grep 'tag_name' | head -n 1 | awk -F ":" '{print $2}' | tr -d '"' | tr -d ',' | tr -d ' ')"
 
   if [[ -z "${ver}" ]]; then
-    echo "ERROR: Failed to retrieve latest release from ${repoURL}, please check your connection!"
+    echo -e "[ ${RED}ERROR${OFF} ]: Failed to retrieve latest release from ${repoURL}, please check your connection!"
     exit 1
   fi
 }
 
 # Exit in case of failure
 function networkWarn() {
-  echo "ERROR: Fail to download CPUFriend, please check your connection!"
+  echo -e "[ ${RED}ERROR${OFF} ]: Fail to download CPUFriend, please check your connection!"
+  clean
   exit 1
 }
 
@@ -105,19 +112,20 @@ function downloadKext() {
   local cfFileName="${cfVER}.RELEASE.zip"
   local cfURL="https://github.com/acidanthera/CPUFriend/releases/download/${cfVER}/${cfFileName}"
   # GitHub's CDN is hosted on Amazon, so here we add -L for redirection support
-  curl --silent -L -O "${cfURL}" || networkWarn
+  curl -# -L -O "${cfURL}" || networkWarn
   # decompress it
   unzip -qu "${cfFileName}"
   # remove stuffs we do not need
   rm -rf "${cfFileName}" 'CPUFriend.kext.dSYM'
-  echo 'Download complete'
+  echo -e "[ ${GREEN}OK${OFF} ]Download complete"
   echo
 }
 
 # Copy the target plist
 function copyPlist() {
   if [[ ! -f "${X86_PLIST}" ]]; then
-    echo "ERROR: ${X86_PLIST} NOT found!"
+    echo -e "[ ${RED}ERROR${OFF} ]: ${X86_PLIST} NOT found!"
+    clean
     exit 1
   fi
 
@@ -133,7 +141,8 @@ function changeLFM(){
   echo "(1) Remain the same (1200/1300mhz)"
   echo "(2) 800mhz"
   echo "(3) Customize"
-  read -p "Which option you want to choose? (1/2/3):" lfm_selection
+  echo -e "${BOLD}Which option you want to choose? (1/2/3)${OFF}"
+  read -p ":" lfm_selection
   case ${lfm_selection} in
     1)
     # Keep default
@@ -155,7 +164,8 @@ function changeLFM(){
     ;;
 
     *)
-    echo "ERROR: Invalid input, closing the script"
+    echo -e "[ ${RED}ERROR${OFF} ]: Invalid input, closing the script"
+    clean
     exit 1
     ;;
   esac
@@ -171,8 +181,9 @@ function customizeLFM
   while  [ ${Count} -lt 3 ] && [[ ${gLFM_RAW} != 0 ]];
   do
     echo
-    echo "Enter the lowest frequency in mhz (e.g. 1300, 2700), 0 to quit"
-    echo "Valid value should between 800 and 3500, and ridiculous value may result in hardware failure!"
+    echo -e "${BOLD}Enter the lowest frequency in mhz (e.g. 1300, 2700), 0 to quit${OFF}"
+    echo "Valid value should between 800 and 3500,"
+    echo "and ridiculous value may result in hardware failure!"
     read -p ": " gLFM_RAW
     if [ ${gLFM_RAW} == 0 ]; then
       # if user enters 0, back to main function
@@ -205,21 +216,22 @@ function customizeLFM
       else
         # invalid value, give 3 chances to re-input
         echo
-        echo "WARNING: Please enter valid value (400~4000)!"
+        echo -e "[ ${BOLD}WARNING${OFF} ]: Please enter valid value (400~4000)!"
         Count=$(($Count+1))
       fi
 
     else
       # invalid value, give 3 chances to re-input
       echo
-      echo "WARNING: Please enter valid value (400~4000)!"
+      echo -e "[ ${BOLD}WARNING${OFF} ]: Please enter valid value (400~4000)!"
       Count=$(($Count+1))
     fi
   done
 
   if [ ${Count} > 2 ]; then
     # if 3 times is over and input value is still invalid, exit
-    echo "ERROR: Invalid input, closing the script"
+    echo -e "[ ${RED}ERROR${OFF} ]: Invalid input, closing the script"
+    clean
     exit 1
   fi
 }
@@ -242,7 +254,8 @@ function changeEPP(){
   fi
 
   echo "(4) Performance"
-  read -p "Which mode is your favourite? (1/2/3/4):" epp_selection
+  echo -e "${BOLD}Which mode is your favourite? (1/2/3/4)${OFF}"
+  read -p ":" epp_selection
   case ${epp_selection} in
     1)
     # Change 20/80/90/92 to C0, max power saving
@@ -274,7 +287,6 @@ function changeEPP(){
       # Keep default 80/90/92, balance power
       # if also no changes for lfm, exit
       echo "It's nice to keep the same, see you next time."
-      echo
       clean
       exit 0
 
@@ -313,7 +325,6 @@ function changeEPP(){
       # Keep default 20, balance performance
       # if also no changes for lfm, exit
       echo "It's nice to keep the same, see you next time."
-      echo
       clean
       exit 0
     fi
@@ -345,7 +356,8 @@ function changeEPP(){
     ;;
 
     *)
-    echo "ERROR: Invalid input, closing the script"
+    echo -e "[ ${RED}ERROR${OFF} ]: Invalid input, closing the script"
+    clean
     exit 1
     ;;
   esac
@@ -360,15 +372,15 @@ function generateKext(){
   # Copy CPUFriend.kext to Desktop
   cp -r CPUFriend.kext /Users/`users`/Desktop/
 
-  echo "Generate complete"
-  echo
+  echo -e "[ ${GREEN}OK${OFF} ]Generate complete"
 }
 
 # Delete tmp folder and end
 function clean(){
+  echo
   echo "Cleaning tmp files"
   sudo rm -rf "${WORK_DIR}"
-  echo "Clean complete"
+  echo -e "[ ${GREEN}OK${OFF} ]Clean complete"
   echo
 }
 
@@ -389,7 +401,7 @@ function main(){
   echo
   generateKext
   clean
-  echo "Great! This is the end of the script, please copy CPUFriend and CPUFriendDataProvider"
+  echo -e "[ ${GREEN}OK${OFF} ]This is the end of the script, please copy CPUFriend and CPUFriendDataProvider"
   echo "from desktop to /CLOVER/kexts/Other/(or L/E/)"
   exit 0
 }
