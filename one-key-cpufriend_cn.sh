@@ -73,7 +73,7 @@ function getGitHubLatestRelease() {
   ver="$(curl --silent "${repoURL}" | grep 'tag_name' | head -n 1 | awk -F ":" '{print $2}' | tr -d '"' | tr -d ',' | tr -d ' ')"
 
   if [[ -z "${ver}" ]]; then
-    echo "WARNING: 无法从${repoURL}获取最新release。"
+    echo "ERROR: 无法从${repoURL}获取最新release, 请检查网络状态!"
     exit 1
   fi
 }
@@ -95,6 +95,7 @@ function downloadKext() {
   echo '|* 正在下载CPUFriend，源自github.com/acidanthera/CPUFriend @PMHeart *|'
   echo '----------------------------------------------------------------------'
 
+  getGitHubLatestRelease
   # 下载ResourceConverter.sh
   local rcURL='https://raw.githubusercontent.com/acidanthera/CPUFriend/master/ResourceConverter/ResourceConverter.sh'
   curl --silent -O "${rcURL}" && chmod +x ./ResourceConverter.sh || networkWarn
@@ -131,8 +132,9 @@ function changeLFM(){
   echo "------------------------------"
   echo "(1) 保持不变 (1200/1300mhz)"
   echo "(2) 800mhz (低负载下更省电)"
-  read -p "你想选择哪个选项? (1/2):" lfm_selection
-  case "${lfm_selection}" in
+  echo "(3) 自定义"
+  read -p "你想选择哪个选项? (1/2/3):" lfm_selection
+  case ${lfm_selection} in
   1)
   # 保持不变
   ;;
@@ -147,11 +149,69 @@ function changeLFM(){
   /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
   ;;
 
+  3)
+  # 自定义LFM
+  customizeLFM
+  ;;
+
   *)
   echo "ERROR: 输入有误, 脚本将退出"
   exit 1
   ;;
  esac
+}
+
+# 自定义LFM
+function customizeLFM
+{
+  local Count=0
+  local gLFM_RAW=""
+
+  # 检查循环次数和输入值
+  while  [ ${Count} -lt 3 ] && [[ ${gLFM_RAW} != 0 ]];
+  do
+    echo
+    echo "请输入最低频率, 单位是mhz (例如 1300, 2700), 输入0来退出"
+    echo "有效值应该在800和3500之间, 离谱的值可能会导致硬件故障!"
+    read -p ": " gLFM_RAW
+    if [ ${gLFM_RAW} == 0 ]; then
+      # 如果用户输入0, 回到主程序
+      return
+
+    # 可接受的LFM应该在400~4000之间
+    elif [ ${gLFM_RAW} -ge 400 ] && [ ${gLFM_RAW} -le 4000 ]; then
+      # 从输入值获取4位十进制数字, 例如 800 -> 0800
+      gLFM_RAW=$(printf '%04d' ${gLFM_RAW})
+      # 提取开头两位数字
+      gLFM_RAW=$(echo ${gLFM_RAW} | cut -c -2)
+      # 移除开头的0, 因为比如08, bash会判断它为八进制数字
+      gLFM_RAW=$(echo ${gLFM_RAW} | sed 's/0*//')
+      # 转换gLFM_RAW到十六进制, 并把它插入到LFM字段
+      gLFM_VAL=$(printf '02000000%02x000000' ${gLFM_RAW})
+      # 转换gLFM_VAL到base64
+      gLFM_ENCODE=$(printf ${gLFM_VAL} | xxd -r -p | base64)
+      # 提取开头11位数字
+      gLFM_ENCODE=$(echo ${gLFM_ENCODE} | cut -c -11)
+
+      # 修改 020000000d000000 成 02000000{自定义值}000000
+      /usr/bin/sed -i "" "s:AgAAAA0AAAA:${gLFM_ENCODE}:g" $BOARD_ID.plist
+      # 修改 020000000c000000 成 02000000{自定义值}000000
+      /usr/bin/sed -i "" "s:AgAAAAwAAAA:${gLFM_ENCODE}:g" $BOARD_ID.plist
+      return
+
+    else
+      # 非有效值, 给3次机会重新输入
+      echo
+      echo "WARNING: 请输入有效值 (400~4000)!"
+      Count=$(($Count+1))
+    fi
+  done
+
+  if [ ${Count} > 2 ]; then
+    # 如果3次机会后输入值仍然非有效值, 退出
+    echo "ERROR: 输入有误, 脚本将退出"
+    exit 1
+  fi
 }
 
 # 修改EPP值来调节性能模式 (参考: https://www.tonymacx86.com/threads/skylake-hwp-enable.214915/page-7)
@@ -163,17 +223,17 @@ function changeEPP(){
   echo "(1) 最省电模式"
 
   # 处理EPP_SUPPORTED_MODELS_SPECIAL
-  if [ "${support}" == 2 ]; then
+  if [ ${support} == 2 ]; then
     echo "(2) 平衡电量模式 (默认)"
     echo "(3) 平衡性能模式"
-  elif [ "${support}" == 3 ]; then
+  elif [ ${support} == 3 ]; then
     echo "(2) 平衡电量模式"
     echo "(3) 平衡性能模式 (默认)"
   fi
 
   echo "(4) 高性能模式"
   read -p "你想选择哪个模式? (1/2/3/4):" epp_selection
-  case "${epp_selection}" in
+  case ${epp_selection} in
     1)
     # 把 80/90/92 改成 C0, 最省电模式
 
@@ -200,7 +260,7 @@ function changeEPP(){
     ;;
 
     2)
-    if [ "${support}" == 2 ] && [ "${lfm_selection}" == 1 ]; then
+    if [ ${support} == 2 ] && [ ${lfm_selection} == 1 ]; then
       # 保持默认值 80/90/92, 平衡电量模式
       # 如果LFM也没有改变, 退出脚本
       echo "不忘初心，方得始终。下次再见。"
@@ -209,7 +269,7 @@ function changeEPP(){
       exit 0
 
     # 处理 EPP_SUPPORTED_MODELS_SPECIAL
-    elif [ "${support}" == 3 ]; then
+    elif [ ${support} == 3 ]; then
       # 把 20 改成 80, 平衡电量模式
 
       # 修改 657070000000000000000000000000000000000020 成 657070000000000000000000000000000000000080
@@ -218,7 +278,7 @@ function changeEPP(){
     ;;
 
     3)
-    if [ "${support}" == 2 ]; then
+    if [ ${support} == 2 ]; then
       # 把 80/90/92 改成 40, 平衡性能模式
 
       # 修改 657070000000000000000000000000000000000080 成 657070000000000000000000000000000000000040
@@ -239,7 +299,7 @@ function changeEPP(){
       # 修改 657070000000000000000000000000000000000080 成 657070000000000000000000000000000000000040
       /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" $BOARD_ID.plist
 
-    elif [ "${support}" == 3 ] && [ "${lfm_selection}" == 1 ]; then
+    elif [ ${support} == 3 ] && [ ${lfm_selection} == 1 ]; then
       # 保持默认值 20, 平衡性能模式
       # 如果LFM也没有改变, 退出脚本
       echo "不忘初心，方得始终。下次再见。"
@@ -306,12 +366,11 @@ function clean(){
 function main(){
   printHeader
   checkBoardID
-  getGitHubLatestRelease
   downloadKext
-  if [ "${support}" == 1 ]; then
+  if [ ${support} == 1 ]; then
     copyPlist
     changeLFM
-  elif [ "${support}" == 2 ] || [ "${support}" == 3 ]; then
+  elif [ ${support} == 2 ] || [ ${support} == 3 ]; then
     copyPlist
     changeLFM
     echo

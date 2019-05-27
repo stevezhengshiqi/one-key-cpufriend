@@ -4,10 +4,10 @@
 # Only support most 5th-8th CPU yet, older CPUs don't use X86PlatformPlugin.kext.
 # This script depends on CPUFriend(https://github.com/acidanthera/CPUFriend) a lot, thanks to PMHeart.
 
-# current board-id
+# Current board-id
 BOARD_ID="$(ioreg -lw0 | grep -i "board-id" | sed -e '/[^<]*</s///; s/\"//g; s/\>//')"
 
-# corresponding plist
+# Corresponding plist
 X86_PLIST="/System/Library/Extensions/IOPlatformPluginFamily.kext/Contents/PlugIns/X86PlatformPlugin.kext/Contents/Resources/${BOARD_ID}.plist"
 
 # supported models
@@ -73,7 +73,7 @@ function getGitHubLatestRelease() {
   ver="$(curl --silent "${repoURL}" | grep 'tag_name' | head -n 1 | awk -F ":" '{print $2}' | tr -d '"' | tr -d ',' | tr -d ' ')"
 
   if [[ -z "${ver}" ]]; then
-    echo "WARNING: Failed to retrieve latest release from ${repoURL}."
+    echo "ERROR: Failed to retrieve latest release from ${repoURL}, please check your connection!"
     exit 1
   fi
 }
@@ -95,6 +95,7 @@ function downloadKext() {
   echo '|* Downloading CPUFriend from https://github.com/acidanthera/CPUFriend @PMheart *|'
   echo '----------------------------------------------------------------------------------'
 
+  getGitHubLatestRelease
   # download ResourceConverter.sh
   local rcURL='https://raw.githubusercontent.com/acidanthera/CPUFriend/master/ResourceConverter/ResourceConverter.sh'
   curl --silent -O "${rcURL}" && chmod +x ./ResourceConverter.sh || networkWarn
@@ -123,7 +124,7 @@ function copyPlist() {
   cp "${X86_PLIST}" .
 }
 
-# chenge LFM value to adjust lowest frequency
+# Change LFM value to adjust lowest frequency
 # Reconsider whether this function is necessary because LFM seems doesn't effect energy performance
 function changeLFM(){
   echo "-----------------------------------------"
@@ -131,8 +132,9 @@ function changeLFM(){
   echo "-----------------------------------------"
   echo "(1) Remain the same (1200/1300mhz)"
   echo "(2) 800mhz"
-  read -p "Which option you want to choose? (1/2):" lfm_selection
-  case "${lfm_selection}" in
+  echo "(3) Customize"
+  read -p "Which option you want to choose? (1/2/3):" lfm_selection
+  case ${lfm_selection} in
     1)
     # Keep default
     ;;
@@ -147,6 +149,11 @@ function changeLFM(){
     /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
     ;;
 
+    3)
+    # Customize LFM
+    customizeLFM
+    ;;
+
     *)
     echo "ERROR: Invalid input, closing the script"
     exit 1
@@ -154,7 +161,60 @@ function changeLFM(){
   esac
 }
 
-# change EPP value to adjust performance (ref: https://www.tonymacx86.com/threads/skylake-hwp-enable.214915/page-7)
+# Customize LFM
+function customizeLFM
+{
+  local Count=0
+  local gLFM_RAW=""
+
+  # check count and user input
+  while  [ ${Count} -lt 3 ] && [[ ${gLFM_RAW} != 0 ]];
+  do
+    echo
+    echo "Enter the lowest frequency in mhz (e.g. 1300, 2700), 0 to quit"
+    echo "Valid value should between 800 and 3500, and ridiculous value may result in hardware failure!"
+    read -p ": " gLFM_RAW
+    if [ ${gLFM_RAW} == 0 ]; then
+      # if user enters 0, back to main function
+      return
+
+    # acceptable LFM should in 400~4000
+    elif [ ${gLFM_RAW} -ge 400 ] && [ ${gLFM_RAW} -le 4000 ]; then
+      # get 4 denary number from user input, eg. 800 -> 0800
+      gLFM_RAW=$(printf '%04d' ${gLFM_RAW})
+      # extract the first two digits
+      gLFM_RAW=$(echo ${gLFM_RAW} | cut -c -2)
+      # remove zeros at the head, because like 08, bash will consider it as octonary number
+      gLFM_RAW=$(echo ${gLFM_RAW} | sed 's/0*//')
+      # convert gLFM_RAW to hex and insert it in LFM field
+      gLFM_VAL=$(printf '02000000%02x000000' ${gLFM_RAW})
+      # convert gLFM_VAL to base64
+      gLFM_ENCODE=$(printf ${gLFM_VAL} | xxd -r -p | base64)
+      # extract the first 11 digits
+      gLFM_ENCODE=$(echo ${gLFM_ENCODE} | cut -c -11)
+
+      # change 020000000d000000 to 02000000{Customized Value}000000
+      /usr/bin/sed -i "" "s:AgAAAA0AAAA:${gLFM_ENCODE}:g" $BOARD_ID.plist
+      # change 020000000c000000 to 02000000{Customized Value}000000
+      /usr/bin/sed -i "" "s:AgAAAAwAAAA:${gLFM_ENCODE}:g" $BOARD_ID.plist
+      return
+
+    else
+      # invalid value, give 3 chances to re-input
+      echo
+      echo "WARNING: Please enter valid value (400~4000)!"
+      Count=$(($Count+1))
+    fi
+  done
+
+  if [ ${Count} > 2 ]; then
+    # if 3 times is over and input value is still invalid, exit
+    echo "ERROR: Invalid input, closing the script"
+    exit 1
+  fi
+}
+
+# Change EPP value to adjust performance (ref: https://www.tonymacx86.com/threads/skylake-hwp-enable.214915/page-7)
 # TO DO: Use a more efficient way to replace frequencyvectors, see https://github.com/Piker-Alpha/freqVectorsEdit.sh
 function changeEPP(){
   echo "----------------------------------------"
@@ -163,17 +223,17 @@ function changeEPP(){
   echo "(1) Max Power Saving"
 
   # Deal with EPP_SUPPORTED_MODELS_SPECIAL
-  if [ "${support}" == 2 ]; then
+  if [ ${support} == 2 ]; then
     echo "(2) Balance Power (Default)"
     echo "(3) Balance performance"
-  elif [ "${support}" == 3 ]; then
+  elif [ ${support} == 3 ]; then
     echo "(2) Balance Power"
     echo "(3) Balance performance (Default)"
   fi
 
   echo "(4) Performance"
   read -p "Which mode is your favourite? (1/2/3/4):" epp_selection
-  case "${epp_selection}" in
+  case ${epp_selection} in
     1)
     # Change 20/80/90/92 to C0, max power saving
 
@@ -200,7 +260,7 @@ function changeEPP(){
     ;;
 
     2)
-    if [ "${support}" == 2 ] && [ "${lfm_selection}" == 1 ]; then
+    if [ ${support} == 2 ] && [ ${lfm_selection} == 1 ]; then
       # Keep default 80/90/92, balance power
       # if also no changes for lfm, exit
       echo "It's nice to keep the same, see you next time."
@@ -209,7 +269,7 @@ function changeEPP(){
       exit 0
 
     # Deal with EPP_SUPPORTED_MODELS_SPECIAL
-    elif [ "${support}" == 3 ]; then
+    elif [ ${support} == 3 ]; then
       # Change 20 to 80, balance performance
 
       # change 657070000000000000000000000000000000000020 to 657070000000000000000000000000000000000080
@@ -218,7 +278,7 @@ function changeEPP(){
     ;;
 
     3)
-    if [ "${support}" == 2 ]; then
+    if [ ${support} == 2 ]; then
       # Change 80/90/92 to 40, balance performance
 
       # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000040
@@ -239,7 +299,7 @@ function changeEPP(){
       # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000040
       /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" $BOARD_ID.plist
 
-    elif [ "${support}" == 3 ] && [ "${lfm_selection}" == 1 ]; then
+    elif [ ${support} == 3 ] && [ ${lfm_selection} == 1 ]; then
       # Keep default 20, balance performance
       # if also no changes for lfm, exit
       echo "It's nice to keep the same, see you next time."
@@ -306,12 +366,11 @@ function clean(){
 function main(){
   printHeader
   checkBoardID
-  getGitHubLatestRelease
   downloadKext
-  if [ "${support}" == 1 ]; then
+  if [ ${support} == 1 ]; then
     copyPlist
     changeLFM
-  elif [ "${support}" == 2 ] || [ "${support}" == 3 ]; then
+  elif [ ${support} == 2 ] || [ ${support} == 3 ]; then
     copyPlist
     changeLFM
     echo
@@ -320,7 +379,7 @@ function main(){
   echo
   generateKext
   clean
-  echo "Great! This is the end of the script, please copy CPUFriend and CPUFriendDataProvider from desktop to /CLOVER/kexts/Other/(or /Library/Extensions/)"
+  echo "Great! This is the end of the script, please copy CPUFriend and CPUFriendDataProvider from desktop to /CLOVER/kexts/Other/(or L/E/)"
   exit 0
 }
 
