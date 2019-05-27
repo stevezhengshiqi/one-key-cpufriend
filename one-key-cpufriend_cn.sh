@@ -210,6 +210,7 @@ function customizeLFM
       fi
 
     else
+      # 非有效值, 给3次机会重新输入
       echo
       echo "WARNING: 请输入有效值 (400~4000)!"
       Count=$(($Count+1))

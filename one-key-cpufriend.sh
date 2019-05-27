@@ -210,6 +210,7 @@ function customizeLFM
       fi
 
     else
+      # invalid value, give 3 chances to re-input
       echo
       echo "WARNING: Please enter valid value (400~4000)!"
       Count=$(($Count+1))
