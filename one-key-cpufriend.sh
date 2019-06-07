@@ -93,6 +93,9 @@ function networkWarn() {
 
 # Download CPUFriend repository and unzip latest release
 function downloadKext() {
+  getGitHubLatestRelease
+
+  # new folder for work
   WORK_DIR="/Users/`users`/Desktop/one-key-cpufriend"
   [[ -d "${WORK_DIR}" ]] && sudo rm -rf "${WORK_DIR}"
   mkdir -p "${WORK_DIR}" && cd "${WORK_DIR}"
@@ -102,7 +105,6 @@ function downloadKext() {
   echo '|* Downloading CPUFriend from https://github.com/acidanthera/CPUFriend @PMheart *|'
   echo '----------------------------------------------------------------------------------'
 
-  getGitHubLatestRelease
   # download ResourceConverter.sh
   local rcURL='https://raw.githubusercontent.com/acidanthera/CPUFriend/master/ResourceConverter/ResourceConverter.sh'
   curl --silent -O "${rcURL}" && chmod +x ./ResourceConverter.sh || networkWarn
@@ -118,7 +120,6 @@ function downloadKext() {
   # remove stuffs we do not need
   rm -rf "${cfFileName}" 'CPUFriend.kext.dSYM'
   echo -e "[ ${GREEN}OK${OFF} ]Download complete"
-  echo
 }
 
 # Copy the target plist
@@ -135,6 +136,7 @@ function copyPlist() {
 # Change LFM value to adjust lowest frequency
 # Reconsider whether this function is necessary because LFM seems doesn't effect energy performance
 function changeLFM(){
+  echo
   echo "-----------------------------------------"
   echo "|****** Choose Low Frequency Mode ******|"
   echo "-----------------------------------------"
@@ -239,6 +241,7 @@ function customizeLFM
 # Change EPP value to adjust performance (ref: https://www.tonymacx86.com/threads/skylake-hwp-enable.214915/page-7)
 # TO DO: Use a more efficient way to replace frequencyvectors, see https://github.com/Piker-Alpha/freqVectorsEdit.sh
 function changeEPP(){
+  echo
   echo "----------------------------------------"
   echo "| Choose Energy Performance Preference |"
   echo "----------------------------------------"
@@ -365,6 +368,7 @@ function changeEPP(){
 
 # Generate CPUFriendDataProvider.kext and move to desktop
 function generateKext(){
+  echo
   echo "Generating CPUFriendDataProvider.kext"
   ./ResourceConverter.sh --kext $BOARD_ID.plist
   cp -r CPUFriendDataProvider.kext /Users/`users`/Desktop/
@@ -395,10 +399,8 @@ function main(){
   elif [ ${support} == 2 ] || [ ${support} == 3 ]; then
     copyPlist
     changeLFM
-    echo
     changeEPP
   fi
-  echo
   generateKext
   clean
   echo -e "[ ${GREEN}OK${OFF} ]This is the end of the script, please copy CPUFriend and CPUFriendDataProvider"

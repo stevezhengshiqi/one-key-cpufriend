@@ -93,6 +93,9 @@ function networkWarn() {
 
 # 下载CPUFriend仓库并解压最新release
 function downloadKext() {
+  getGitHubLatestRelease
+
+  # 新建工程文件夹
   WORK_DIR="/Users/`users`/Desktop/one-key-cpufriend"
   [[ -d "${WORK_DIR}" ]] && sudo rm -rf "${WORK_DIR}"
   mkdir -p "${WORK_DIR}" && cd "${WORK_DIR}"
@@ -102,7 +105,6 @@ function downloadKext() {
   echo '|* 正在下载CPUFriend，源自github.com/acidanthera/CPUFriend @PMHeart *|'
   echo '----------------------------------------------------------------------'
 
-  getGitHubLatestRelease
   # 下载ResourceConverter.sh
   local rcURL='https://raw.githubusercontent.com/acidanthera/CPUFriend/master/ResourceConverter/ResourceConverter.sh'
   curl --silent -O "${rcURL}" && chmod +x ./ResourceConverter.sh || networkWarn
@@ -118,7 +120,6 @@ function downloadKext() {
   # 移除不需要的文件
   rm -rf "${cfFileName}" 'CPUFriend.kext.dSYM'
   echo -e "[ ${GREEN}OK${OFF} ]下载完成"
-  echo
 }
 
 # 拷贝目标plist
@@ -135,6 +136,7 @@ function copyPlist() {
 # 修改LFM值来调整最低频率
 # 重新考虑这个方法是否必要, 因为LFM看起来不会影响性能表现
 function changeLFM(){
+  echo
   echo "------------------------------"
   echo "|****** 选择低频率模式 ******|"
   echo "------------------------------"
@@ -238,6 +240,7 @@ function customizeLFM
 # 修改EPP值来调节性能模式 (参考: https://www.tonymacx86.com/threads/skylake-hwp-enable.214915/page-7)
 # TO DO: 用更好的方式来修改变频参数, 见 https://github.com/Piker-Alpha/freqVectorsEdit.sh
 function changeEPP(){
+  echo
   echo "----------------------------"
   echo "|****** 选择性能模式 ******|"
   echo "----------------------------"
@@ -364,6 +367,7 @@ function changeEPP(){
 
 # 生成 CPUFriendDataProvider.kext 并复制到桌面
 function generateKext(){
+  echo
   echo "正在生成CPUFriendDataProvider.kext"
   ./ResourceConverter.sh --kext $BOARD_ID.plist
   cp -r CPUFriendDataProvider.kext /Users/`users`/Desktop/
@@ -394,10 +398,8 @@ function main(){
   elif [ ${support} == 2 ] || [ ${support} == 3 ]; then
     copyPlist
     changeLFM
-    echo
     changeEPP
   fi
-  echo
   generateKext
   clean
   echo -e "[ ${GREEN}OK${OFF} ]脚本运行结束, 请把桌面上的CPUFriend和CPUFriendDataProvider"
