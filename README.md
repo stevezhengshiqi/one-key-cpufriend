@@ -15,6 +15,7 @@ By using this script, no file under the System folder will be edited. If you are
 
 ## Before install
 
+- Read [CPUFriend WARNING](https://github.com/acidanthera/CPUFriend/blob/master/Instructions.md#warning)
 - Good network
 - If you have `FakeCPUID` argument in `config.plist`, this script may cause issue
 - Make sure `IOPlatformPluginFamily.kext` untouched

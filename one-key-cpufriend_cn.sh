@@ -21,6 +21,7 @@ EPP_SUPPORTED_MODELS=(
   'Mac-9AE82516C7C6B903' # MacBook9,1
   'Mac-EE2EBD4B90B839A8' # MacBook10,1
   'Mac-827FAC58A8FDFA22' # MacBookAir8,1
+  'Mac-226CB3C6A851A671' # MacBookAir8,2
   'Mac-473D31EABEB93F9B' # MacBookPro13,1
   'Mac-66E35819EE2D0D05' # MacBookPro13,2
   'Mac-A5C67F76ED83108C' # MacBookPro13,3
@@ -29,6 +30,8 @@ EPP_SUPPORTED_MODELS=(
   'Mac-551B86E5744E2388' # MacBookPro14,3
   'Mac-937A206F2EE63C01' # MacBookPro15,1
   'Mac-827FB448E656EC26' # MacBookPro15,2
+  'Mac-1E7E29AD0135F9BC' # MacBookPro15,3
+  'Mac-53FDB3D8DB8CA971' # MacBookPro15,4
 )
 
 EPP_SUPPORTED_MODELS_SPECIAL=(
@@ -111,7 +114,7 @@ function downloadKext() {
 
   # 下载CPUFriend.kext
   local cfVER="${ver}"
-  local cfFileName="${cfVER}.RELEASE.zip"
+  local cfFileName="CPUFriend-${cfVER}-RELEASE.zip"
   local cfURL="https://github.com/acidanthera/CPUFriend/releases/download/${cfVER}/${cfFileName}"
   # GitHub的CDN是被Amazon所拥有, 所以我们在这添加 -L 来支持重置链接
   curl -# -L -O "${cfURL}" || networkWarn

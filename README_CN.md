@@ -15,6 +15,7 @@
 
 ## 使用前提
 
+- 阅读 [CPUFriend WARNING](https://github.com/acidanthera/CPUFriend/blob/master/Instructions.md#warning)
 - 网络环境良好
 - 如果你的 `config.plist` 有 `FakeCPUID` 参数，这个脚本可能会导致问题
 - 确保 `IOPlatformPluginFamily.kext` 未经修改
