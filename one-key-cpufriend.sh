@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#set -x # for DEBUGGING
+
 # Created by stevezhengshiqi on 8 Feb, 2019.
 # Only support most 5th-8th CPU yet, older CPUs don't use X86PlatformPlugin.kext.
 # This script depends on CPUFriend(https://github.com/acidanthera/CPUFriend) a lot, thanks to PMHeart.

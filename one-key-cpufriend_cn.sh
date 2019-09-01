@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#set -x # for DEBUGGING
+
 # stevezhengshiqi 创建于2019年2月8日。
 # 暂时只支持大部分5代-8代U, 更老的CPU不使用X86PlatformPlugin.kext。
 # 此脚本很依赖于 CPUFriend(https://github.com/acidanthera/CPUFriend), 感谢PMHeart。
