@@ -101,7 +101,7 @@ function downloadKext() {
   getGitHubLatestRelease
 
   # new folder for work
-  WORK_DIR="/Users/`users`/Desktop/one-key-cpufriend"
+  WORK_DIR="$HOME/Desktop/one-key-cpufriend"
   [[ -d "${WORK_DIR}" ]] && sudo rm -rf "${WORK_DIR}"
   mkdir -p "${WORK_DIR}" && cd "${WORK_DIR}"
 
@@ -149,7 +149,7 @@ function changeLFM(){
   echo "(2) 800mhz"
   echo "(3) Customize"
   echo -e "${BOLD}Which option you want to choose? (1/2/3)${OFF}"
-  read -p ":" lfm_selection
+  read -rp ":" lfm_selection
   case ${lfm_selection} in
     1)
     # Keep default
@@ -159,10 +159,10 @@ function changeLFM(){
     # Change 1200/1300 to 800
 
     # change 020000000d000000 to 0200000008000000
-    /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" "$BOARD_ID.plist"
 
     # change 020000000c000000 to 0200000008000000
-    /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" "$BOARD_ID.plist"
     ;;
 
     3)
@@ -191,7 +191,7 @@ function customizeLFM
     echo -e "${BOLD}Enter the lowest frequency in mhz (e.g. 1300, 2700), 0 to quit${OFF}"
     echo "Valid value should between 800 and 3500,"
     echo "and ridiculous value may result in hardware failure!"
-    read -p ": " gLFM_RAW
+    read -rp ": " gLFM_RAW
     if [ ${gLFM_RAW} == 0 ]; then
       # if user enters 0, back to main function
       return
@@ -224,18 +224,18 @@ function customizeLFM
         # invalid value, give 3 chances to re-input
         echo
         echo -e "[ ${BOLD}WARNING${OFF} ]: Please enter valid value (400~4000)!"
-        Count=$(($Count+1))
+        Count=$((Count+1))
       fi
 
     else
       # invalid value, give 3 chances to re-input
       echo
       echo -e "[ ${BOLD}WARNING${OFF} ]: Please enter valid value (400~4000)!"
-      Count=$(($Count+1))
+      Count=$((Count+1))
     fi
   done
 
-  if [ ${Count} > 2 ]; then
+  if [ ${Count} -gt 2 ]; then
     # if 3 times is over and input value is still invalid, exit
     echo -e "[ ${RED}ERROR${OFF} ]: Invalid input, closing the script"
     clean
@@ -263,31 +263,31 @@ function changeEPP(){
 
   echo "(4) Performance"
   echo -e "${BOLD}Which mode is your favourite? (1/2/3/4)${OFF}"
-  read -p ":" epp_selection
+  read -rp ":" epp_selection
   case ${epp_selection} in
     1)
     # Change 20/80/90/92 to C0, max power saving
 
     # change 657070000000000000000000000000000000000080 to 6570700000000000000000000000000000000000c0
-    /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:DAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:DAAAAAAAAAAAAAAAAAAAAAc:g" "$BOARD_ID.plist"
 
     # change 657070000000000000000000000000000000000080 to 6570700000000000000000000000000000000000c0
-    /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAd:DAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAd:DAAAAAAAAAAAAAAAAAAAAAd:g" "$BOARD_ID.plist"
 
     # change 657070000000000000000000000000000000000092 to 6570700000000000000000000000000000000000c0
-    /usr/bin/sed -i "" "s:CSAAAAAAAAAAAAAAAAAAAAc:DAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:CSAAAAAAAAAAAAAAAAAAAAc:DAAAAAAAAAAAAAAAAAAAAAc:g" "$BOARD_ID.plist"
 
     # change 657070000000000000000000000000000000000090 to 6570700000000000000000000000000000000000c0
-    /usr/bin/sed -i "" "s:CQAAAAAAAAAAAAAAAAAAAAc:DAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:CQAAAAAAAAAAAAAAAAAAAAc:DAAAAAAAAAAAAAAAAAAAAAc:g" "$BOARD_ID.plist"
 
     # change 657070000000000000000000000000000000000092 to 6570700000000000000000000000000000000000c0
-    /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACS:ZXBwAAAAAAAAAAAAAAAAAAAAAADA:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACS:ZXBwAAAAAAAAAAAAAAAAAAAAAADA:g" "$BOARD_ID.plist"
 
     # change 657070000000000000000000000000000000000080 to 6570700000000000000000000000000000000000c0
-    /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAADA:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAADA:g" "$BOARD_ID.plist"
 
     # change 657070000000000000000000000000000000000020 to 6570700000000000000000000000000000000000c0
-    /usr/bin/sed -i "" "s:AgAAAAAAAAAAAAAAAAAAAAd:DAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:AgAAAAAAAAAAAAAAAAAAAAd:DAAAAAAAAAAAAAAAAAAAAAd:g" "$BOARD_ID.plist"
     ;;
 
     2)
@@ -303,7 +303,7 @@ function changeEPP(){
       # Change 20 to 80, balance performance
 
       # change 657070000000000000000000000000000000000020 to 657070000000000000000000000000000000000080
-      /usr/bin/sed -i "" "s:AgAAAAAAAAAAAAAAAAAAAAd:CAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
+      /usr/bin/sed -i "" "s:AgAAAAAAAAAAAAAAAAAAAAd:CAAAAAAAAAAAAAAAAAAAAAd:g" "$BOARD_ID.plist"
     fi
     ;;
 
@@ -312,22 +312,22 @@ function changeEPP(){
       # Change 80/90/92 to 40, balance performance
 
       # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000040
-      /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+      /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" "$BOARD_ID.plist"
 
       # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000040
-      /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAd:BAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
+      /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAd:BAAAAAAAAAAAAAAAAAAAAAd:g" "$BOARD_ID.plist"
 
       # change 657070000000000000000000000000000000000092 to 657070000000000000000000000000000000000040
-      /usr/bin/sed -i "" "s:CSAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+      /usr/bin/sed -i "" "s:CSAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" "$BOARD_ID.plist"
 
       # change 657070000000000000000000000000000000000090 to 657070000000000000000000000000000000000040
-      /usr/bin/sed -i "" "s:CQAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+      /usr/bin/sed -i "" "s:CQAAAAAAAAAAAAAAAAAAAAc:BAAAAAAAAAAAAAAAAAAAAAc:g" "$BOARD_ID.plist"
 
       # change 657070000000000000000000000000000000000092 to 657070000000000000000000000000000000000040
-      /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACS:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" $BOARD_ID.plist
+      /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACS:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" "$BOARD_ID.plist"
 
       # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000040
-      /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" $BOARD_ID.plist
+      /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" "$BOARD_ID.plist"
 
     elif [ ${support} == 3 ] && [ ${lfm_selection} == 1 ]; then
       # Keep default 20, balance performance
@@ -342,25 +342,25 @@ function changeEPP(){
     # Change 20/80/90/92 to 00, performance
 
     # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000000
-    /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:AAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAc:AAAAAAAAAAAAAAAAAAAAAAc:g" "$BOARD_ID.plist"
 
     # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000000
-    /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAd:AAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:CAAAAAAAAAAAAAAAAAAAAAd:AAAAAAAAAAAAAAAAAAAAAAd:g" "$BOARD_ID.plist"
 
     # change 657070000000000000000000000000000000000092 to 657070000000000000000000000000000000000000
-    /usr/bin/sed -i "" "s:CSAAAAAAAAAAAAAAAAAAAAc:AAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:CSAAAAAAAAAAAAAAAAAAAAc:AAAAAAAAAAAAAAAAAAAAAAc:g" "$BOARD_ID.plist"
 
     # change 657070000000000000000000000000000000000090 to 657070000000000000000000000000000000000000
-    /usr/bin/sed -i "" "s:CQAAAAAAAAAAAAAAAAAAAAc:AAAAAAAAAAAAAAAAAAAAAAc:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:CQAAAAAAAAAAAAAAAAAAAAc:AAAAAAAAAAAAAAAAAAAAAAc:g" "$BOARD_ID.plist"
 
     # change 657070000000000000000000000000000000000092 to 657070000000000000000000000000000000000000
-    /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACS:ZXBwAAAAAAAAAAAAAAAAAAAAAAAA:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACS:ZXBwAAAAAAAAAAAAAAAAAAAAAAAA:g" "$BOARD_ID.plist"
 
     # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000000
-    /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAAAA:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACA:ZXBwAAAAAAAAAAAAAAAAAAAAAAAA:g" "$BOARD_ID.plist"
 
     # change 657070000000000000000000000000000000000020 to 657070000000000000000000000000000000000000
-    /usr/bin/sed -i "" "s:AgAAAAAAAAAAAAAAAAAAAAd:AAAAAAAAAAAAAAAAAAAAAAd:g" $BOARD_ID.plist
+    /usr/bin/sed -i "" "s:AgAAAAAAAAAAAAAAAAAAAAd:AAAAAAAAAAAAAAAAAAAAAAd:g" "$BOARD_ID.plist"
     ;;
 
     *)
@@ -375,11 +375,11 @@ function changeEPP(){
 function generateKext(){
   echo
   echo "Generating CPUFriendDataProvider.kext"
-  ./ResourceConverter.sh --kext $BOARD_ID.plist
-  cp -r CPUFriendDataProvider.kext /Users/`users`/Desktop/
+  ./ResourceConverter.sh --kext "$BOARD_ID.plist"
+  cp -r CPUFriendDataProvider.kext "$HOME/Desktop/"
 
   # Copy CPUFriend.kext to Desktop
-  cp -r CPUFriend.kext /Users/`users`/Desktop/
+  cp -r CPUFriend.kext "$HOME/Desktop/"
 
   echo -e "[ ${GREEN}OK${OFF} ]Generate complete"
 }
