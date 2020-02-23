@@ -7,7 +7,7 @@
 # 此脚本很依赖于 CPUFriend(https://github.com/acidanthera/CPUFriend), 感谢PMHeart。
 
 # 当前的board-id
-BOARD_ID="$(ioreg -lw0 | grep -i "board-id" | sed -e '/[^<]*</s///; s/\"//g; s/\>//')"
+BOARD_ID="$(ioreg -lw0 | grep -i "board-id" | sed -e '/[^<]*</s///; s/\"//g; s/\>//; s/\>>//')"
 
 # 输出样式设置
 BOLD="\033[1m"
