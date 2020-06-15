@@ -103,7 +103,7 @@ function downloadKext() {
   # new folder for work
   WORK_DIR="$HOME/Desktop/one-key-cpufriend"
   [[ -d "${WORK_DIR}" ]] && sudo rm -rf "${WORK_DIR}"
-  mkdir -p "${WORK_DIR}" && cd "${WORK_DIR}"
+  mkdir -p "${WORK_DIR}" && cd "${WORK_DIR}" || exit 1
 
   echo
   echo '----------------------------------------------------------------------------------'
@@ -112,7 +112,7 @@ function downloadKext() {
 
   # download ResourceConverter.sh
   local rcURL='https://raw.githubusercontent.com/acidanthera/CPUFriend/master/Tools/ResourceConverter.sh'
-  curl --silent -O "${rcURL}" && chmod +x ./ResourceConverter.sh || networkWarn
+  curl --silent -O "${rcURL}" || networkWarn && chmod +x ./ResourceConverter.sh
 
   # download CPUFriend.kext
   local cfVER="${ver}"
@@ -192,7 +192,7 @@ function customizeLFM
     echo "Valid value should between 800 and 3500,"
     echo "and ridiculous value may result in hardware failure!"
     read -rp ": " gLFM_RAW
-    if [ ${gLFM_RAW} == 0 ]; then
+    if [ "${gLFM_RAW}" == 0 ]; then
       # if user enters 0, back to main function
       return
 
@@ -200,24 +200,24 @@ function customizeLFM
     elif [[ ${gLFM_RAW} =~ ^[0-9]*$ ]]; then
 
       # acceptable LFM should in 400~4000
-      if [ ${gLFM_RAW} -ge 400 ] && [ ${gLFM_RAW} -le 4000 ]; then
+      if [ "${gLFM_RAW}" -ge 400 ] && [ "${gLFM_RAW}" -le 4000 ]; then
         # get 4 denary number from user input, eg. 800 -> 0800
-        gLFM_RAW=$(printf '%04d' ${gLFM_RAW})
+        gLFM_RAW=$(printf '%04d' "${gLFM_RAW}")
         # extract the first two digits
-        gLFM_RAW=$(echo ${gLFM_RAW} | cut -c -2)
+        gLFM_RAW=$(echo "${gLFM_RAW}" | cut -c -2)
         # remove zeros at the head, because like 08, bash will consider it as octonary number
-        gLFM_RAW=$(echo ${gLFM_RAW} | sed 's/0*//')
+        gLFM_RAW=$(echo "${gLFM_RAW}" | sed 's/0*//')
         # convert gLFM_RAW to hex and insert it in LFM field
-        gLFM_VAL=$(printf '02000000%02x000000' ${gLFM_RAW})
+        gLFM_VAL=$(printf '02000000%02x000000' "${gLFM_RAW}")
         # convert gLFM_VAL to base64
-        gLFM_ENCODE=$(printf ${gLFM_VAL} | xxd -r -p | base64)
+        gLFM_ENCODE=$(printf "${gLFM_VAL}" | xxd -r -p | base64)
         # extract the first 11 digits
-        gLFM_ENCODE=$(echo ${gLFM_ENCODE} | cut -c -11)
+        gLFM_ENCODE=$(echo "${gLFM_ENCODE}" | cut -c -11)
 
         # change 020000000d000000 to 02000000{Customized Value}000000
-        /usr/bin/sed -i "" "s:AgAAAA0AAAA:${gLFM_ENCODE}:g" $BOARD_ID.plist
+        /usr/bin/sed -i "" "s:AgAAAA0AAAA:${gLFM_ENCODE}:g" "$BOARD_ID.plist"
         # change 020000000c000000 to 02000000{Customized Value}000000
-        /usr/bin/sed -i "" "s:AgAAAAwAAAA:${gLFM_ENCODE}:g" $BOARD_ID.plist
+        /usr/bin/sed -i "" "s:AgAAAAwAAAA:${gLFM_ENCODE}:g" "$BOARD_ID.plist"
         return
 
       else
@@ -253,10 +253,10 @@ function changeEPP(){
   echo "(1) Max Power Saving"
 
   # Deal with EPP_SUPPORTED_MODELS_SPECIAL
-  if [ ${support} == 2 ]; then
+  if [ "${support}" == 2 ]; then
     echo "(2) Balance Power (Default)"
     echo "(3) Balance performance"
-  elif [ ${support} == 3 ]; then
+  elif [ "${support}" == 3 ]; then
     echo "(2) Balance Power"
     echo "(3) Balance performance (Default)"
   fi
@@ -294,7 +294,7 @@ function changeEPP(){
     ;;
 
     2)
-    if [ ${support} == 2 ] && [ ${lfm_selection} == 1 ]; then
+    if [ "${support}" == 2 ] && [ "${lfm_selection}" == 1 ]; then
       # Keep default 80/90/92, balance power
       # if also no changes for lfm, exit
       echo "It's nice to keep the same, see you next time."
@@ -302,7 +302,7 @@ function changeEPP(){
       exit 0
 
     # Deal with EPP_SUPPORTED_MODELS_SPECIAL
-    elif [ ${support} == 3 ]; then
+    elif [ "${support}" == 3 ]; then
       # Change 20 to 80, balance performance
 
       # change 657070000000000000000000000000000000000020 to 657070000000000000000000000000000000000080
@@ -311,7 +311,7 @@ function changeEPP(){
     ;;
 
     3)
-    if [ ${support} == 2 ]; then
+    if [ "${support}" == 2 ]; then
       # Change 80/90/92 to 40, balance performance
 
       # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000040
@@ -335,7 +335,7 @@ function changeEPP(){
       # change 657070000000000000000000000000000000000090 to 657070000000000000000000000000000000000040
       /usr/bin/sed -i "" "s:ZXBwAAAAAAAAAAAAAAAAAAAAAACQ:ZXBwAAAAAAAAAAAAAAAAAAAAAABA:g" "$BOARD_ID.plist"
 
-    elif [ ${support} == 3 ] && [ ${lfm_selection} == 1 ]; then
+    elif [ "${support}" == 3 ] && [ "${lfm_selection}" == 1 ]; then
       # Keep default 20, balance performance
       # if also no changes for lfm, exit
       echo "It's nice to keep the same, see you next time."
@@ -407,10 +407,10 @@ function main(){
   printHeader
   checkBoardID
   downloadKext
-  if [ ${support} == 1 ]; then
+  if [ "${support}" == 1 ]; then
     copyPlist
     changeLFM
-  elif [ ${support} == 2 ] || [ ${support} == 3 ]; then
+  elif [ "${support}" == 2 ] || [ "${support}" == 3 ]; then
     copyPlist
     changeLFM
     changeEPP
