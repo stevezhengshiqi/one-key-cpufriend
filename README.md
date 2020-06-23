@@ -1,12 +1,12 @@
 # Modify macOS CPU Performance
 
-[English](README.md) | [中文](README_CN.md)
+**English** | [中文](README_CN.md)
 
 ## Instruction
 
 I am really a newcomer for bash language, and welcome pros to help improve the script.
 
-<b>The script is only for most 5th-8th generation CPU yet.</b> I will try to add support for more models if needed.
+**The script is only for most 5th-8th generation CPU yet.** I will try to add support for more models if needed.
 
 The script can modify low frequency mode and energy performance preference, and use [ResourceConverter.sh](https://github.com/acidanthera/CPUFriend/tree/master/ResourceConverter) to generate customized `CPUFriendDataProvider.kext`.
 
@@ -44,7 +44,7 @@ If unfortunately, you can't boot into the system, and you are sure the issue is 
  - Press `Space` when you are in Clover page
  - Use keyboard to choose `Block Injected kexts` - `Other`
  - Check `CPUFriend.kext` and `CPUFriendDataProvider.kext`
- - Return to the main menu and boot into the system, then delete `CPUFriend*.kext` from your CLOVER folder
+ - `Return` to the main menu and boot into the system, then delete `CPUFriend*.kext` from your CLOVER folder
 
 
 ## Credits
