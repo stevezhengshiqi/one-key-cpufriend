@@ -38,6 +38,8 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/stevezhengshiqi/one-key-
   - 打开 `/OC/config.plist` 并添加以下代码：
 ```xml
 <dict>
+    <key>Arch</key>
+    <string>x86_64</string>
     <key>BundlePath</key>
     <string>CPUFriend.kext</string>
     <key>Comment</key>
@@ -54,6 +56,8 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/stevezhengshiqi/one-key-
     <string>Contents/Info.plist</string>
 </dict>
 <dict>
+    <key>Arch</key>
+    <string>x86_64</string>
     <key>BundlePath</key>
     <string>CPUFriendDataProvider.kext</string>
     <key>Comment</key>
