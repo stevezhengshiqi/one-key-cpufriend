@@ -235,7 +235,7 @@ function customizeLFM
         gLFM_ENCODE=$(echo "${gLFM_ENCODE}" | cut -c -11)
 
         if [ "${support}" == 4 ]; then
-          # change 0200000008000000 to 02000000{Customized Value}000000
+          # 修改 0200000008000000 成 02000000{自定义值}000000
           /usr/bin/sed -i "" "s:AgAAAAgAAAA:${gLFM_ENCODE}:g" "$BOARD_ID.plist"
         else
           # 修改 020000000d000000 成 02000000{自定义值}000000
