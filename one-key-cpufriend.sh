@@ -34,6 +34,9 @@ EPP_SUPPORTED_MODELS=(
   'Mac-827FB448E656EC26' # MacBookPro15,2
   'Mac-1E7E29AD0135F9BC' # MacBookPro15,3
   'Mac-53FDB3D8DB8CA971' # MacBookPro15,4
+  'Mac-E1008331FDC96864' # MacBookPro16,1
+  'Mac-E7203C0F68AA0004' # MacBookPro16,3
+  'Mac-A61BADE1FDAD7B05' # MacBookPro16,4
 )
 
 EPP_SUPPORTED_MODELS_SPECIAL=(
@@ -49,6 +52,11 @@ LFM_SUPPORTED_MODELS=(
   'Mac-FFE5EF870D7BA81A' # iMac16,2
   'Mac-4B682C642B45593E' # iMac18,1
   'Mac-77F17D7DA9285301' # iMac18,2
+)
+
+LFM_800_MODELS=(
+  'Mac-0CFF9C7C2B63DF8D' # MacBookAir9,1
+  'Mac-5F9802EFE386AA28' # MacBookPro16,2
 )
 
 function printHeader() {
@@ -71,6 +79,8 @@ function checkBoardID() {
     support=2
   elif echo "${EPP_SUPPORTED_MODELS_SPECIAL[@]}" | grep -w "${BOARD_ID}" &> /dev/null; then
     support=3
+  elif echo "${LFM_800_MODELS[@]}" | grep -w "${BOARD_ID}" &> /dev/null; then
+    support=4
   elif echo "${LFM_SUPPORTED_MODELS[@]}" | grep -w "${BOARD_ID}" &> /dev/null; then
     support=1
   else
@@ -145,24 +155,35 @@ function changeLFM(){
   echo "-----------------------------------------"
   echo "|****** Choose Low Frequency Mode ******|"
   echo "-----------------------------------------"
-  echo "(1) Remain the same (1200/1300mhz)"
-  echo "(2) 800mhz"
+  if [ "${support}" == 4 ]; then
+    echo "(1) 1200mhz"
+    echo "(2) 800mhz (Remain the same)"
+  else
+    echo "(1) 1200/1300mhz (Remain the same)"
+    echo "(2) 800mhz"
+  fi
   echo "(3) Customize"
   echo -e "${BOLD}Which option you want to choose? (1/2/3)${OFF}"
   read -rp ":" lfm_selection
   case ${lfm_selection} in
     1)
-    # Keep default
+    # Deal with LFM_800_MODELS
+    # Change 800 to 1200
+    if [ "${support}" == 4 ]; then
+      # change 0200000008000000 to 020000000c000000
+      /usr/bin/sed -i "" "s:AgAAAAgAAAA:AgAAAAwAAAA:g" "$BOARD_ID.plist"
+    fi
     ;;
 
     2)
     # Change 1200/1300 to 800
+    if [ "${support}" != 4 ]; then
+      # change 020000000d000000 to 0200000008000000
+      /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" "$BOARD_ID.plist"
 
-    # change 020000000d000000 to 0200000008000000
-    /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" "$BOARD_ID.plist"
-
-    # change 020000000c000000 to 0200000008000000
-    /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" "$BOARD_ID.plist"
+      # change 020000000c000000 to 0200000008000000
+      /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" "$BOARD_ID.plist"
+    fi
     ;;
 
     3)
@@ -214,10 +235,15 @@ function customizeLFM
         # extract the first 11 digits
         gLFM_ENCODE=$(echo "${gLFM_ENCODE}" | cut -c -11)
 
-        # change 020000000d000000 to 02000000{Customized Value}000000
-        /usr/bin/sed -i "" "s:AgAAAA0AAAA:${gLFM_ENCODE}:g" "$BOARD_ID.plist"
-        # change 020000000c000000 to 02000000{Customized Value}000000
-        /usr/bin/sed -i "" "s:AgAAAAwAAAA:${gLFM_ENCODE}:g" "$BOARD_ID.plist"
+        if [ "${support}" == 4 ]; then
+          # change 0200000008000000 to 02000000{Customized Value}000000
+          /usr/bin/sed -i "" "s:AgAAAAgAAAA:${gLFM_ENCODE}:g" "$BOARD_ID.plist"
+        else
+          # change 020000000d000000 to 02000000{Customized Value}000000
+          /usr/bin/sed -i "" "s:AgAAAA0AAAA:${gLFM_ENCODE}:g" "$BOARD_ID.plist"
+          # change 020000000c000000 to 02000000{Customized Value}000000
+          /usr/bin/sed -i "" "s:AgAAAAwAAAA:${gLFM_ENCODE}:g" "$BOARD_ID.plist"
+        fi
         return
 
       else
@@ -253,7 +279,7 @@ function changeEPP(){
   echo "(1) Max Power Saving"
 
   # Deal with EPP_SUPPORTED_MODELS_SPECIAL
-  if [ "${support}" == 2 ]; then
+  if [ "${support}" == 2 ] || [ "${support}" == 4 ]; then
     echo "(2) Balance Power (Default)"
     echo "(3) Balance performance"
   elif [ "${support}" == 3 ]; then
@@ -294,7 +320,7 @@ function changeEPP(){
     ;;
 
     2)
-    if [ "${support}" == 2 ] && [ "${lfm_selection}" == 1 ]; then
+    if { [ "${support}" == 2 ] && [ "${lfm_selection}" == 1 ]; } || { [ "${support}" == 4 ] && [ "${lfm_selection}" == 2 ]; }; then
       # Keep default 80/90/92, balance power
       # if also no changes for lfm, exit
       echo "It's nice to keep the same, see you next time."
@@ -311,7 +337,7 @@ function changeEPP(){
     ;;
 
     3)
-    if [ "${support}" == 2 ]; then
+    if [ "${support}" == 2 ] || [ "${support}" == 4 ]; then
       # Change 80/90/92 to 40, balance performance
 
       # change 657070000000000000000000000000000000000080 to 657070000000000000000000000000000000000040
@@ -410,7 +436,7 @@ function main(){
   if [ "${support}" == 1 ]; then
     copyPlist
     changeLFM
-  elif [ "${support}" == 2 ] || [ "${support}" == 3 ]; then
+  elif [ "${support}" == 2 ] || [ "${support}" == 3 ] || [ "${support}" == 4 ]; then
     copyPlist
     changeLFM
     changeEPP

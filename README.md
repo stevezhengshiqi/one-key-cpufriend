@@ -4,7 +4,7 @@
 
 ## Instruction
 
-**The script is only for most 5th-8th generation CPU yet.** I will try to add support for more models if needed.
+**The script is only for most 5th-10th generation CPU yet.** I will try to add support for more models if needed.
 
 The script can modify low frequency mode and energy performance preference, and use [ResourceConverter.sh](https://github.com/acidanthera/CPUFriend/tree/master/ResourceConverter) to generate customized `CPUFriendDataProvider.kext`.
 
@@ -35,7 +35,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/stevezhengshiqi/one-key-
 
 - **For OC users:**
   - Copy `CPUFriend.kext` and `CPUFriendDataProvider.kext` from desktop to `/OC/Kexts/`.
-  - Open `/OC/config.plist` and add the following code:
+  - Open `/OC/config.plist` and add the following code into `Kernel - Add`:
 ```xml
 <dict>
     <key>Arch</key>

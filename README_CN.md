@@ -4,7 +4,7 @@
 
 ## 简介
 
-**这个脚本目前只支持大部分5代-8代U。** 如果需要，将来我会尝试添加更多机型。
+**这个脚本目前只支持大部分5代-10代U。** 如果需要，将来我会尝试添加更多机型。
 
 这个脚本能修改低频率模式和性能模式，然后用 [ResourceConverter.sh](https://github.com/acidanthera/CPUFriend/tree/master/ResourceConverter) 来生成定制的 `CPUFriendDataProvider.kext`。
 
@@ -35,7 +35,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/stevezhengshiqi/one-key-
 
 - **如果是 OC 用户：**
   - 把桌面上的 `CPUFriend.kext` 和 `CPUFriendDataProvider.kext` 复制进 `/OC/Kexts/`。
-  - 打开 `/OC/config.plist` 并添加以下代码：
+  - 打开 `/OC/config.plist` 并添加以下代码到 `Kernel - Add`：
 ```xml
 <dict>
     <key>Arch</key>

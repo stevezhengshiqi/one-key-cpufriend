@@ -34,6 +34,9 @@ EPP_SUPPORTED_MODELS=(
   'Mac-827FB448E656EC26' # MacBookPro15,2
   'Mac-1E7E29AD0135F9BC' # MacBookPro15,3
   'Mac-53FDB3D8DB8CA971' # MacBookPro15,4
+  'Mac-E1008331FDC96864' # MacBookPro16,1
+  'Mac-E7203C0F68AA0004' # MacBookPro16,3
+  'Mac-A61BADE1FDAD7B05' # MacBookPro16,4
 )
 
 EPP_SUPPORTED_MODELS_SPECIAL=(
@@ -49,6 +52,11 @@ LFM_SUPPORTED_MODELS=(
   'Mac-FFE5EF870D7BA81A' # iMac16,2
   'Mac-4B682C642B45593E' # iMac18,1
   'Mac-77F17D7DA9285301' # iMac18,2
+)
+
+LFM_800_MODELS=(
+  'Mac-0CFF9C7C2B63DF8D' # MacBookAir9,1
+  'Mac-5F9802EFE386AA28' # MacBookPro16,2
 )
 
 function printHeader() {
@@ -71,6 +79,8 @@ function checkBoardID() {
     support=2
   elif echo "${EPP_SUPPORTED_MODELS_SPECIAL[@]}" | grep -w "${BOARD_ID}" &> /dev/null; then
     support=3
+  elif echo "${LFM_800_MODELS[@]}" | grep -w "${BOARD_ID}" &> /dev/null; then
+    support=4
   elif echo "${LFM_SUPPORTED_MODELS[@]}" | grep -w "${BOARD_ID}" &> /dev/null; then
     support=1
   else
@@ -145,24 +155,35 @@ function changeLFM(){
   echo "------------------------------"
   echo "|****** 选择低频率模式 ******|"
   echo "------------------------------"
-  echo "(1) 保持不变 (1200/1300mhz)"
-  echo "(2) 800mhz (低负载下更省电)"
+  if [ "${support}" == 4 ]; then
+    echo "(1) 1200mhz"
+    echo "(2) 800mhz (保持不变)"
+  else
+    echo "(1) 1200/1300mhz (保持不变)"
+    echo "(2) 800mhz (低负载下更省电)"
+  fi
   echo "(3) 自定义"
   echo -e "${BOLD}你想选择哪个选项? (1/2/3)${OFF}"
   read -rp ":" lfm_selection
   case ${lfm_selection} in
     1)
-    # 保持不变
+    # 处理 LFM_800_MODELS
+    # 把 800 改成 1200
+    if [ "${support}" == 4 ]; then
+      # 修改 0200000008000000 成 020000000c000000
+      /usr/bin/sed -i "" "s:AgAAAAgAAAA:AgAAAAwAAAA:g" "$BOARD_ID.plist"
+    fi
     ;;
 
     2)
     # 把 1200/1300 改成 800
+    if [ "${support}" != 4 ]; then
+      # 修改 020000000d000000 成 0200000008000000
+      /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" "$BOARD_ID.plist"
 
-    # 修改 020000000d000000 成 0200000008000000
-    /usr/bin/sed -i "" "s:AgAAAA0AAAA:AgAAAAgAAAA:g" "$BOARD_ID.plist"
-
-    # 修改 020000000c000000 成 0200000008000000
-    /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" "$BOARD_ID.plist"
+      # 修改 020000000c000000 成 0200000008000000
+      /usr/bin/sed -i "" "s:AgAAAAwAAAA:AgAAAAgAAAA:g" "$BOARD_ID.plist"
+    fi
     ;;
 
     3)
@@ -213,10 +234,15 @@ function customizeLFM
         # 提取开头11位数字
         gLFM_ENCODE=$(echo "${gLFM_ENCODE}" | cut -c -11)
 
-        # 修改 020000000d000000 成 02000000{自定义值}000000
-        /usr/bin/sed -i "" "s:AgAAAA0AAAA:${gLFM_ENCODE}:g" "$BOARD_ID.plist"
-        # 修改 020000000c000000 成 02000000{自定义值}000000
-        /usr/bin/sed -i "" "s:AgAAAAwAAAA:${gLFM_ENCODE}:g" "$BOARD_ID.plist"
+        if [ "${support}" == 4 ]; then
+          # change 0200000008000000 to 02000000{Customized Value}000000
+          /usr/bin/sed -i "" "s:AgAAAAgAAAA:${gLFM_ENCODE}:g" "$BOARD_ID.plist"
+        else
+          # 修改 020000000d000000 成 02000000{自定义值}000000
+          /usr/bin/sed -i "" "s:AgAAAA0AAAA:${gLFM_ENCODE}:g" "$BOARD_ID.plist"
+          # 修改 020000000c000000 成 02000000{自定义值}000000
+          /usr/bin/sed -i "" "s:AgAAAAwAAAA:${gLFM_ENCODE}:g" "$BOARD_ID.plist"
+        fi
         return
 
       else
@@ -252,7 +278,7 @@ function changeEPP(){
   echo "(1) 最省电模式"
 
   # 处理EPP_SUPPORTED_MODELS_SPECIAL
-  if [ "${support}" == 2 ]; then
+  if [ "${support}" == 2 ] || [ "${support}" == 4 ]; then
     echo "(2) 平衡电量模式 (默认)"
     echo "(3) 平衡性能模式"
   elif [ "${support}" == 3 ]; then
@@ -293,7 +319,7 @@ function changeEPP(){
     ;;
 
     2)
-    if [ "${support}" == 2 ] && [ "${lfm_selection}" == 1 ]; then
+    if { [ "${support}" == 2 ] && [ "${lfm_selection}" == 1 ]; } || { [ "${support}" == 4 ] && [ "${lfm_selection}" == 2 ]; }; then
       # 保持默认值 80/90/92, 平衡电量模式
       # 如果LFM也没有改变, 退出脚本
       echo "不忘初心，方得始终。下次再见。"
@@ -310,7 +336,7 @@ function changeEPP(){
     ;;
 
     3)
-    if [ "${support}" == 2 ]; then
+    if [ "${support}" == 2 ] || [ "${support}" == 4 ]; then
       # 把 80/90/92 改成 40, 平衡性能模式
 
       # 修改 657070000000000000000000000000000000000080 成 657070000000000000000000000000000000000040
@@ -409,7 +435,7 @@ function main(){
   if [ "${support}" == 1 ]; then
     copyPlist
     changeLFM
-  elif [ "${support}" == 2 ] || [ "${support}" == 3 ]; then
+  elif [ "${support}" == 2 ] || [ "${support}" == 3 ] || [ "${support}" == 4 ]; then
     copyPlist
     changeLFM
     changeEPP
