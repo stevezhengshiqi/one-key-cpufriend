@@ -27,7 +27,7 @@ By using this script, no file under the System folder will be edited. If you are
 - Run the following command in Terminal:
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/stevezhengshiqi/one-key-cpufriend/master/one-key-cpufriend.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/stevezhengshiqi/one-key-cpufriend/main/one-key-cpufriend.sh)"
 ```
 
 - **For Clover users:**
