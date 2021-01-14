@@ -442,8 +442,9 @@ function main(){
   fi
   generateKext
   clean
-  echo -e "[ ${GREEN}OK${OFF} ]脚本运行结束, 请把桌面上的CPUFriend和CPUFriendDataProvider"
-  echo "放入/CLOVER/kexts/Other/(或者L/E/)下"
+  echo -e "[ ${GREEN}OK${OFF} ]脚本运行结束, 请把桌面上的 CPUFriend 和 CPUFriendDataProvider"
+  echo "Clover: 放入 /CLOVER/kexts/Other/ 或者 L/E/ 路径下"
+  echo "OC: 放入 /OC/Kexts/ 并添加 README_CN 中的补丁到 config.plist - Kernel - Add"
   exit 0
 }
 

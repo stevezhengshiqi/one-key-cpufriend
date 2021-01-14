@@ -443,8 +443,9 @@ function main(){
   fi
   generateKext
   clean
-  echo -e "[ ${GREEN}OK${OFF} ]This is the end of the script, please copy CPUFriend and CPUFriendDataProvider"
-  echo "from desktop to /CLOVER/kexts/Other/(or L/E/)"
+  echo -e "[ ${GREEN}OK${OFF} ]This is the end of the script, please copy CPUFriend and CPUFriendDataProvider from desktop"
+  echo "Clover: to /CLOVER/kexts/Other/ or L/E/"
+  echo "OC: to /OC/Kexts/ and add patches from README to config.plist - Kernel - Add"
   exit 0
 }
 
