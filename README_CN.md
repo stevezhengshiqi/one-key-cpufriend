@@ -19,7 +19,7 @@
 - 确保 `IOPlatformPluginFamily.kext` 未经修改
 - 确保 [Lilu](https://github.com/acidanthera/Lilu) 在工作
 - 确保你在使用正确的 SMBIOS 机型
-- `plugin-type=1`，通常由 [SSDT-PLUG](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/SSDT-PLUG.dsl) 或者 [SSDT-XCPM](https://github.com/RehabMan/OS-X-Clover-Laptop-Config/blob/master/hotpatch/SSDT-XCPM.dsl) 来注入
+- `plugin-type=1`，通常由 [SSDT-PLUG](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-PLUG.dsl) 或者 [SSDT-XCPM](https://github.com/RehabMan/OS-X-Clover-Laptop-Config/blob/master/hotpatch/SSDT-XCPM.dsl) 来注入
 
 
 ## 使用方法

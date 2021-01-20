@@ -19,7 +19,7 @@ By using this script, no file under the System folder will be edited. If you are
 - Make sure `IOPlatformPluginFamily.kext` untouched
 - Make sure [Lilu](https://github.com/acidanthera/Lilu) is working
 - Make sure you are using correct SMBIOS model
-- `plugin-type=1`, often injected by [SSDT-PLUG](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/SSDT-PLUG.dsl) or [SSDT-XCPM](https://github.com/RehabMan/OS-X-Clover-Laptop-Config/blob/master/hotpatch/SSDT-XCPM.dsl)
+- `plugin-type=1`, often injected by [SSDT-PLUG](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-PLUG.dsl) or [SSDT-XCPM](https://github.com/RehabMan/OS-X-Clover-Laptop-Config/blob/master/hotpatch/SSDT-XCPM.dsl)
 
 
 ## How to install
