@@ -27,7 +27,7 @@
 - 在终端输入以下命令并回车：
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/stevezhengshiqi/one-key-cpufriend/main/one-key-cpufriend_cn.sh)"
+bash -c "$(curl -fsSL https://hackintosh.stevezheng.workers.dev/https://raw.githubusercontent.com/stevezhengshiqi/one-key-cpufriend/main/one-key-cpufriend_cn.sh)"
 ```
 
 - **如果是 Clover 用户：**

@@ -15,6 +15,9 @@ RED="\033[1;31m"
 GREEN="\033[1;32m"
 OFF="\033[m"
 
+# Cloudflare 链接
+CFURL="https://hackintosh.stevezheng.workers.dev"
+
 # 对应的plist
 X86_PLIST="/System/Library/Extensions/IOPlatformPluginFamily.kext/Contents/PlugIns/X86PlatformPlugin.kext/Contents/Resources/${BOARD_ID}.plist"
 
@@ -91,7 +94,7 @@ function checkBoardID() {
 
 function getGitHubLatestRelease() {
   local repoURL='https://api.github.com/repos/acidanthera/CPUFriend/releases/latest'
-  ver="$(curl --silent "${repoURL}" | grep 'tag_name' | head -n 1 | awk -F ":" '{print $2}' | tr -d '"' | tr -d ',' | tr -d ' ')"
+  ver="$(curl --silent "${CFURL}/${repoURL}" | grep 'tag_name' | head -n 1 | awk -F ":" '{print $2}' | tr -d '"' | tr -d ',' | tr -d ' ')"
 
   if [[ -z "${ver}" ]]; then
     echo -e "[ ${RED}ERROR${OFF} ]: 无法从${repoURL}获取最新release, 请检查网络状态!"
@@ -122,7 +125,7 @@ function downloadKext() {
 
   # 下载ResourceConverter.sh
   local rcURL='https://raw.githubusercontent.com/acidanthera/CPUFriend/master/Tools/ResourceConverter.sh'
-  curl --silent -O "${rcURL}" || networkWarn && chmod +x ./ResourceConverter.sh
+  curl --silent -O "${CFURL}/${rcURL}" || networkWarn && chmod +x ./ResourceConverter.sh
 
   # 下载CPUFriend.kext
   local cfVER="${ver}"
