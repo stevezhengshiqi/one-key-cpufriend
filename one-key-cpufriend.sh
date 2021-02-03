@@ -410,11 +410,11 @@ function changeEPP(){
 function generateKext(){
   echo
   echo "Generating CPUFriendDataProvider.kext"
-  ./ResourceConverter.sh --kext "$BOARD_ID.plist"
-  cp -r CPUFriendDataProvider.kext "$HOME/Desktop/"
+  ./ResourceConverter.sh --kext "$BOARD_ID.plist" || exit 1
+  cp -r CPUFriendDataProvider.kext "$HOME/Desktop/" || exit 1
 
   # Copy CPUFriend.kext to Desktop
-  cp -r CPUFriend.kext "$HOME/Desktop/"
+  cp -r CPUFriend.kext "$HOME/Desktop/" || exit 1
 
   echo -e "[ ${GREEN}OK${OFF} ]Generate complete"
 }

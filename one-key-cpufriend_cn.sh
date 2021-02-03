@@ -93,8 +93,8 @@ function checkBoardID() {
 }
 
 function getGitHubLatestRelease() {
-  local repoURL='https://api.github.com/repos/acidanthera/CPUFriend/releases/latest'
-  ver="$(curl --silent "${CFURL}/${repoURL}" | grep 'tag_name' | head -n 1 | awk -F ":" '{print $2}' | tr -d '"' | tr -d ',' | tr -d ' ')"
+  local repoURL="https://api.github.com/repos/acidanthera/CPUFriend/releases/latest"
+  ver="$(curl --silent "${repoURL}" | grep 'tag_name' | head -n 1 | awk -F ":" '{print $2}' | tr -d '"' | tr -d ',' | tr -d ' ')"
 
   if [[ -z "${ver}" ]]; then
     echo -e "[ ${RED}ERROR${OFF} ]: 无法从${repoURL}获取最新release, 请检查网络状态!"
@@ -124,13 +124,13 @@ function downloadKext() {
   echo '----------------------------------------------------------------------'
 
   # 下载ResourceConverter.sh
-  local rcURL='https://raw.githubusercontent.com/acidanthera/CPUFriend/master/Tools/ResourceConverter.sh'
-  curl --silent -O "${CFURL}/${rcURL}" || networkWarn && chmod +x ./ResourceConverter.sh
+  local rcURL="${CFURL}/https://raw.githubusercontent.com/acidanthera/CPUFriend/master/Tools/ResourceConverter.sh"
+  curl --silent -L -O "${rcURL}" || networkWarn && chmod +x ./ResourceConverter.sh
 
   # 下载CPUFriend.kext
   local cfVER="${ver}"
   local cfFileName="CPUFriend-${cfVER}-RELEASE.zip"
-  local cfURL="https://github.com/acidanthera/CPUFriend/releases/download/${cfVER}/${cfFileName}"
+  local cfURL="${CFURL}/https://github.com/acidanthera/CPUFriend/releases/download/${cfVER}/${cfFileName}"
   # GitHub的CDN是被Amazon所拥有, 所以我们在这添加 -L 来支持重置链接
   curl -# -L -O "${cfURL}" || networkWarn
   # 解压
@@ -412,11 +412,11 @@ function changeEPP(){
 function generateKext(){
   echo
   echo "正在生成CPUFriendDataProvider.kext"
-  ./ResourceConverter.sh --kext "$BOARD_ID.plist"
-  cp -r CPUFriendDataProvider.kext "$HOME/Desktop/"
+  ./ResourceConverter.sh --kext "$BOARD_ID.plist" || exit 1
+  cp -r CPUFriendDataProvider.kext "$HOME/Desktop/" || exit 1
 
   # 拷贝CPUFriend.kext到桌面
-  cp -r CPUFriend.kext "$HOME/Desktop/"
+  cp -r CPUFriend.kext "$HOME/Desktop/" || exit 1
 
   echo -e "[ ${GREEN}OK${OFF} ]生成完成"
 }
