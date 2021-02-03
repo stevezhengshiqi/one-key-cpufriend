@@ -131,7 +131,7 @@ function downloadKext() {
   # GitHub's CDN is hosted on Amazon, so here we add -L for redirection support
   curl -# -L -O "${cfURL}" || networkWarn
   # decompress it
-  unzip -qu "${cfFileName}"
+  unzip -qu "${cfFileName}" || exit 1
   # remove stuffs we do not need
   rm -rf "${cfFileName}" 'CPUFriend.kext.dSYM'
   echo -e "[ ${GREEN}OK${OFF} ]Download complete"
@@ -145,7 +145,7 @@ function copyPlist() {
     exit 1
   fi
 
-  cp "${X86_PLIST}" .
+  cp "${X86_PLIST}" . || exit 1
 }
 
 # Change LFM value to adjust lowest frequency

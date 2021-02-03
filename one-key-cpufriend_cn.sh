@@ -134,7 +134,7 @@ function downloadKext() {
   # GitHub的CDN是被Amazon所拥有, 所以我们在这添加 -L 来支持重置链接
   curl -# -L -O "${cfURL}" || networkWarn
   # 解压
-  unzip -qu "${cfFileName}"
+  unzip -qu "${cfFileName}" || exit 1
   # 移除不需要的文件
   rm -rf "${cfFileName}" 'CPUFriend.kext.dSYM'
   echo -e "[ ${GREEN}OK${OFF} ]下载完成"
@@ -148,7 +148,7 @@ function copyPlist() {
     exit 1
   fi
 
-  cp "${X86_PLIST}" .
+  cp "${X86_PLIST}" . || exit 1
 }
 
 # 修改LFM值来调整最低频率
