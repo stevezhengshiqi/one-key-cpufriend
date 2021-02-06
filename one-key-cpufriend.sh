@@ -128,7 +128,7 @@ function downloadKext() {
   # GitHub's CDN is hosted on Amazon, so here we add -L for redirection support
   curl -# -L -O "${cfURL}" || networkWarn
   # decompress it
-  unzip -qq "*.zip" >/dev/null 2>&1 || exit 1
+  unzip -qq "*.zip" || exit 1
   echo -e "[ ${GREEN}OK${OFF} ]Download complete"
 }
 

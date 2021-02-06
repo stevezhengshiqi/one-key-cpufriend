@@ -131,7 +131,7 @@ function downloadKext() {
   # GitHub的CDN是被Amazon所拥有, 所以我们在这添加 -L 来支持重置链接
   curl -# -L -O "${cfURL}" || networkWarn
   # 解压
-  unzip -qq "*.zip" >/dev/null 2>&1 || exit 1
+  unzip -qq "*.zip" || exit 1
   echo -e "[ ${GREEN}OK${OFF} ]下载完成"
 }
 
