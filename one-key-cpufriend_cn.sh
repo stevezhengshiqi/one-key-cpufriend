@@ -92,16 +92,6 @@ function checkBoardID() {
   fi
 }
 
-function getGitHubLatestRelease() {
-  local repoURL="https://api.github.com/repos/acidanthera/CPUFriend/releases/latest"
-  ver="$(curl --silent "${repoURL}" | grep 'tag_name' | head -n 1 | awk -F ":" '{print $2}' | tr -d '"' | tr -d ',' | tr -d ' ')"
-
-  if [[ -z "${ver}" ]]; then
-    echo -e "[ ${RED}ERROR${OFF} ]: 无法从${repoURL}获取最新release, 请检查网络状态!"
-    exit 1
-  fi
-}
-
 # 如果网络异常，退出
 function networkWarn() {
   echo -e "[ ${RED}ERROR${OFF} ]: 下载CPUFriend失败, 请检查网络状态!"
@@ -111,7 +101,10 @@ function networkWarn() {
 
 # 下载CPUFriend仓库并解压最新release
 function downloadKext() {
-  getGitHubLatestRelease
+  local cfRawURL
+  local cfURL
+  local HG
+  local rcURL
 
   # 新建工程文件夹
   WORK_DIR="$HOME/Desktop/one-key-cpufriend"
@@ -124,19 +117,21 @@ function downloadKext() {
   echo '----------------------------------------------------------------------'
 
   # 下载ResourceConverter.sh
-  local rcURL="${CFURL}/https://raw.githubusercontent.com/acidanthera/CPUFriend/master/Tools/ResourceConverter.sh"
-  curl --silent -L -O "${rcURL}" || networkWarn && chmod +x ./ResourceConverter.sh
+  rcURL="${CFURL}/https://raw.githubusercontent.com/acidanthera/CPUFriend/master/Tools/ResourceConverter.sh"
+  curl --silent -L -O "${rcURL}" || networkWarn
+  chmod +x ./ResourceConverter.sh || exit 1
 
   # 下载CPUFriend.kext
-  local cfVER="${ver}"
-  local cfFileName="CPUFriend-${cfVER}-RELEASE.zip"
-  local cfURL="${CFURL}/https://github.com/acidanthera/CPUFriend/releases/download/${cfVER}/${cfFileName}"
+  HG="grep -m 1 RELEASE"
+  cfRawURL="${CFURL}/https://github.com/acidanthera/CPUFriend/releases/latest"
+  cfURL="${CFURL}/https://github.com$(curl -L --silent "${cfRawURL}" | grep '/download/' | eval "${HG}" | sed 's/^[^"]*"\([^"]*\)".*/\1/')"
+  if [[ -z ${cfURL} || ${cfURL} == "https://github.com" ]]; then
+    networkWarn
+  fi
   # GitHub的CDN是被Amazon所拥有, 所以我们在这添加 -L 来支持重置链接
   curl -# -L -O "${cfURL}" || networkWarn
   # 解压
-  unzip -qu "${cfFileName}" || exit 1
-  # 移除不需要的文件
-  rm -rf "${cfFileName}" 'CPUFriend.kext.dSYM'
+  unzip -qq "*.zip" >/dev/null 2>&1 || exit 1
   echo -e "[ ${GREEN}OK${OFF} ]下载完成"
 }
 

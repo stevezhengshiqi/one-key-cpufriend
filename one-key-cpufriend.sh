@@ -89,16 +89,6 @@ function checkBoardID() {
   fi
 }
 
-function getGitHubLatestRelease() {
-  local repoURL='https://api.github.com/repos/acidanthera/CPUFriend/releases/latest'
-  ver="$(curl --silent "${repoURL}" | grep 'tag_name' | head -n 1 | awk -F ":" '{print $2}' | tr -d '"' | tr -d ',' | tr -d ' ')"
-
-  if [[ -z "${ver}" ]]; then
-    echo -e "[ ${RED}ERROR${OFF} ]: Failed to retrieve latest release from ${repoURL}, please check your connection!"
-    exit 1
-  fi
-}
-
 # Exit in case of failure
 function networkWarn() {
   echo -e "[ ${RED}ERROR${OFF} ]: Fail to download CPUFriend, please check your connection!"
@@ -108,7 +98,10 @@ function networkWarn() {
 
 # Download CPUFriend repository and unzip latest release
 function downloadKext() {
-  getGitHubLatestRelease
+  local cfRawURL
+  local cfURL
+  local HG
+  local rcURL
 
   # new folder for work
   WORK_DIR="$HOME/Desktop/one-key-cpufriend"
@@ -121,19 +114,21 @@ function downloadKext() {
   echo '----------------------------------------------------------------------------------'
 
   # download ResourceConverter.sh
-  local rcURL='https://raw.githubusercontent.com/acidanthera/CPUFriend/master/Tools/ResourceConverter.sh'
-  curl --silent -O "${rcURL}" || networkWarn && chmod +x ./ResourceConverter.sh
+  rcURL='https://raw.githubusercontent.com/acidanthera/CPUFriend/master/Tools/ResourceConverter.sh'
+  curl --silent -O "${rcURL}" || networkWarn
+  chmod +x ./ResourceConverter.sh || exit 1
 
   # download CPUFriend.kext
-  local cfVER="${ver}"
-  local cfFileName="CPUFriend-${cfVER}-RELEASE.zip"
-  local cfURL="https://github.com/acidanthera/CPUFriend/releases/download/${cfVER}/${cfFileName}"
+  HG="grep -m 1 RELEASE"
+  cfRawURL="https://github.com/acidanthera/CPUFriend/releases/latest"
+  cfURL="https://github.com$(curl -L --silent "${cfRawURL}" | grep '/download/' | eval "${HG}" | sed 's/^[^"]*"\([^"]*\)".*/\1/')"
+  if [[ -z ${cfURL} || ${cfURL} == "https://github.com" ]]; then
+    networkWarn
+  fi
   # GitHub's CDN is hosted on Amazon, so here we add -L for redirection support
   curl -# -L -O "${cfURL}" || networkWarn
   # decompress it
-  unzip -qu "${cfFileName}" || exit 1
-  # remove stuffs we do not need
-  rm -rf "${cfFileName}" 'CPUFriend.kext.dSYM'
+  unzip -qq "*.zip" >/dev/null 2>&1 || exit 1
   echo -e "[ ${GREEN}OK${OFF} ]Download complete"
 }
 
