@@ -59,6 +59,13 @@ LFM_800_MODELS=(
   'Mac-5F9802EFE386AA28' # MacBookPro16,2
 )
 
+function init() {
+  if [[ ${OSTYPE} != darwin* ]]; then
+    echo "This script can only run in macOS, aborting"
+    exit 1
+  fi
+}
+
 function printHeader() {
   printf '\e[8;40;90t'
 
@@ -425,6 +432,7 @@ function clean(){
 
 # Main function
 function main(){
+  init
   printHeader
   checkBoardID
   downloadKext

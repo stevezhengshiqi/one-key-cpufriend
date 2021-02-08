@@ -62,6 +62,13 @@ LFM_800_MODELS=(
   'Mac-5F9802EFE386AA28' # MacBookPro16,2
 )
 
+function init() {
+  if [[ ${OSTYPE} != darwin* ]]; then
+    echo "此脚本只能在 macOS 上运行，正在退出"
+    exit 1
+  fi
+}
+
 function printHeader() {
   printf '\e[8;40;90t'
 
@@ -427,6 +434,7 @@ function clean(){
 
 # 主程序
 function main(){
+  init
   printHeader
   checkBoardID
   downloadKext
