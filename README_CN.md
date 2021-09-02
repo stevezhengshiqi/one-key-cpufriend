@@ -21,6 +21,8 @@
 - 确保你在使用正确的 SMBIOS 机型
 - `plugin-type=1`，通常由 [SSDT-PLUG](https://github.com/acidanthera/OpenCorePkg/blob/master/Docs/AcpiSamples/Source/SSDT-PLUG.dsl) 或者 [SSDT-XCPM](https://github.com/RehabMan/OS-X-Clover-Laptop-Config/blob/master/hotpatch/SSDT-XCPM.dsl) 来注入
 
+**注意：升级 macOS 版本前建议停用 `CPUFriend.kext` 和 `CPUFriendDataProvider.kext`。每次升级 macOS 版本后，你需要重新生成 `CPUFriendDataProvider.kext`，否则电源管理会不正常或者导致内核崩溃。**
+
 
 ## 使用方法
 
