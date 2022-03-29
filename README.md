@@ -53,7 +53,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/stevezhengshiqi/one-key-
     <key>MaxKernel</key>
     <string></string>
     <key>MinKernel</key>
-    <string>12.0.0</string>
+    <string></string>
     <key>PlistPath</key>
     <string>Contents/Info.plist</string>
 </dict>
@@ -71,7 +71,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/stevezhengshiqi/one-key-
     <key>MaxKernel</key>
     <string></string>
     <key>MinKernel</key>
-    <string>12.0.0</string>
+    <string></string>
     <key>PlistPath</key>
     <string>Contents/Info.plist</string>
 </dict>
