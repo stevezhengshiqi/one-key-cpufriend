@@ -108,7 +108,6 @@ function networkWarn() {
 
 # 下载CPUFriend仓库并解压最新release
 function downloadKext() {
-  local cfRawURL
   local cfURL
   local HG
   local rcURL
@@ -130,8 +129,8 @@ function downloadKext() {
 
   # 下载CPUFriend.kext
   HG="grep -m 1 RELEASE"
-  cfRawURL="${CFURL}/https://github.com/acidanthera/CPUFriend/releases/latest"
-  cfURL="${CFURL}/https://github.com$(curl -L --silent "${cfRawURL}" | grep '/download/' | eval "${HG}" | sed 's/^[^"]*"\([^"]*\)".*/\1/')"
+  TAG="$(git -c 'versionsort.suffix=-' ls-remote --exit-code --refs --sort='version:refname' --tags https://github.com/acidanthera/CPUFriend '*.*.*' | tail -n 1 | sed 's/^.*tags\///')"
+  cfURL="https://github.com$(curl -L --silent "https://github.com/acidanthera/CPUFriend/releases/expanded_assets/${TAG}" | grep '/download/' | eval "${HG}" | sed 's/^[^"]*"\([^"]*\)".*/\1/')"
   if [[ -z ${cfURL} || ${cfURL} == "https://github.com" ]]; then
     networkWarn
   fi
