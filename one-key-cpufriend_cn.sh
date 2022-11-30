@@ -129,7 +129,7 @@ function downloadKext() {
 
   # 下载CPUFriend.kext
   HG="grep -m 1 RELEASE"
-  cfRawURL="${CFURL}/https://github.com/acidanthera/CPUFriend/releases/latest"
+  cfRawURL="https://github.com/acidanthera/CPUFriend/releases/latest"
   cfRawURL=$(curl -Ls -o /dev/null -w "%{url_effective}" "${cfRawURL}" | sed 's/releases\/tag/releases\/expanded_assets/')
   cfURL="${CFURL}/https://github.com$(curl -L --silent "${cfRawURL}" | grep '/download/' | eval "${HG}" | sed 's/^[^"]*"\([^"]*\)".*/\1/')"
   if [[ -z ${cfURL} || ${cfURL} == "https://github.com" ]]; then
